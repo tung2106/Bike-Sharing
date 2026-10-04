@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Velo · Dự đoán lượt thuê xe</title>
+  <meta name="description" content="Ước tính số lượt thuê xe đạp theo giờ từ mô hình Bike Sharing đã huấn luyện.">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Đến nội dung chính</a>
+  <aside class="rail" aria-label="Thông tin ứng dụng">
+    <a class="brand" href="/" aria-label="Velo, trang chủ"><span class="brand-mark">V</span><span>velo<span class="brand-dot">.</span></span></a>
+    <div class="rail-title">BIKE SHARING</div>
+    <div class="rail-active"><span aria-hidden="true">◷</span> Dự đoán theo giờ</div>
+    <div class="rail-bottom"><span class="mini-line"></span><strong>Mỗi giờ, một góc nhìn.</strong><p>Dữ liệu Capital Bikeshare<br>Washington, D.C. · 2011–2012</p></div>
+  </aside>
+  <main id="main">
+    <header class="topbar"><span>Không gian dự đoán</span><span class="status" id="model-status">Đang kết nối mô hình…</span></header>
+    <section class="page-heading"><div><div class="eyebrow">NHU CẦU DI CHUYỂN</div><h1>Dự đoán lượt thuê xe</h1><p>Chọn một thời điểm và điều kiện thời tiết để ước tính nhu cầu theo giờ.</p></div><span class="model-tag">Mô hình theo giờ</span></section>
+    <div class="workspace">
+      <section class="input-panel" aria-labelledby="input-title">
+        <div class="panel-heading"><h2 id="input-title">Thiết lập dự đoán</h2><span class="step-label">01 / ĐẦU VÀO</span></div>
+        <form id="prediction-form">
+          <fieldset><legend><span class="section-number">01</span> Thời điểm</legend>
+            <div class="field-grid"><label for="date">Ngày tham chiếu<input id="date" name="date" type="date" min="2011-01-01" max="2012-12-31" value="2012-05-01" required aria-describedby="date-help"></label><label for="hour">Khung giờ<select id="hour" name="hour" required></select></label></div>
+            <p class="field-help" id="date-help">Mô phỏng trong giai đoạn 2011–2012 mà mô hình đã học.</p>
+            <label class="check-field"><input type="checkbox" id="holiday" name="holiday"><span>Đây là ngày lễ</span></label>
+            <div class="calendar-info" id="calendar-info">Thứ Ba · Mùa xuân · Ngày làm việc</div>
+          </fieldset>
+          <fieldset><legend><span class="section-number">02</span> Điều kiện thời tiết</legend>
+            <label for="weather">Tình trạng thời tiết<select id="weather" name="weather"><option value="1">Trời quang / ít mây</option><option value="2">Sương mù / nhiều mây</option><option value="3">Mưa nhẹ / tuyết nhẹ</option><option value="4">Mưa lớn / tuyết lớn</option></select></label>
+            <div class="field-grid weather-grid">
+              <label for="temperature">Nhiệt độ<div class="unit-input"><input id="temperature" name="temperature" type="number" min="-8" max="39" step="any" value="24" placeholder="Để trống nếu chưa biết"><span>°C</span></div></label>
+              <label for="feels_like">Nhiệt độ cảm nhận<div class="unit-input"><input id="feels_like" name="feels_like" type="number" min="-16" max="50" step="any" value="26" placeholder="Để trống nếu chưa biết"><span>°C</span></div></label>
+              <label for="humidity">Độ ẩm<div class="unit-input"><input id="humidity" name="humidity" type="number" min="0" max="100" step="any" value="65" placeholder="Để trống nếu chưa biết"><span>%</span></div></label>
+              <label for="wind_speed">Tốc độ gió<div class="unit-input"><input id="wind_speed" name="wind_speed" type="number" min="0" max="67" step="any" value="12" placeholder="Để trống nếu chưa biết"><span>km/h</span></div></label>
+            </div>
+            <p class="field-help">Ô số để trống được điền bằng trung vị đã học từ tập train.</p>
+          </fieldset>
+          <div id="form-error" role="alert" hidden></div>
+          <button class="primary-button" id="predict-button" type="submit" disabled>Tính dự đoán</button>
+        </form>
+      </section>
+      <div class="result-column">
+        <section class="result-panel" aria-labelledby="result-title" aria-live="polite" aria-atomic="true">
+          <div class="result-top"><span class="eyebrow">KẾT QUẢ ƯỚC TÍNH</span><span class="result-label" id="result-state">Chưa dự đoán</span></div>
+          <h2 id="result-title">Nhu cầu trong một giờ</h2>
+          <div class="prediction"><span id="prediction-value">—</span><span class="prediction-unit">lượt thuê</span></div>
+          <p id="prediction-caption">Kết quả sẽ xuất hiện sau khi bạn chọn “Tính dự đoán”.</p>
+          <div class="result-divider"></div>
+          <div class="result-facts"><div><span>Thời điểm</span><strong id="result-time">—</strong></div><div><span>Thời tiết</span><strong id="result-weather">—</strong></div></div>
+          <p id="imputation-note" class="imputation-note" hidden></p>
+        </section>
+        <section class="quality-panel" aria-labelledby="quality-title">
+          <div class="panel-heading"><h2 id="quality-title">Hiệu quả đã kiểm thử</h2><span class="small-tag">TẬP TEST</span></div>
+          <div class="metrics"><div><span>R²</span><strong id="r2-value">—</strong></div><div><span>MAE <small>lượt/giờ</small></span><strong id="mae-value">—</strong></div><div><span>RMSE</span><strong id="rmse-value">—</strong></div></div>
+          <p class="quality-note">MAE là sai lệch tuyệt đối trung bình trên tập test, không phải khoảng tin cậy cho từng dự đoán.</p>
+        </section>
+        <section class="context-note"><span class="info-icon" aria-hidden="true">i</span><div><h2>Đọc kết quả đúng bối cảnh</h2><p>Mô hình ước tính tổng lượt thuê của hệ thống Capital Bikeshare trong một giờ, không phải số xe còn trống ở một trạm. Dữ liệu 2011–2012 chưa xác nhận khả năng dự báo nhu cầu hiện tại.</p></div></section>
+      </div>
+    </div>
+    <footer><span>Velo · Bike Sharing Prediction</span><a href="https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset" target="_blank" rel="noopener noreferrer">Nguồn dữ liệu: UCI Bike Sharing</a></footer>
+  </main>
+</body>
+</html>

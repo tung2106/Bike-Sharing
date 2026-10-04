@@ -1,0 +1,111 @@
+{
+  "source": "day.csv",
+  "original_rows": 731,
+  "missing_cells_original": {
+    "instant": 0,
+    "dteday": 0,
+    "season": 0,
+    "yr": 0,
+    "mnth": 0,
+    "holiday": 0,
+    "weekday": 0,
+    "workingday": 0,
+    "weathersit": 0,
+    "temp": 0,
+    "atemp": 0,
+    "hum": 0,
+    "windspeed": 0,
+    "casual": 0,
+    "registered": 0,
+    "cnt": 0
+  },
+  "duplicates_removed": 0,
+  "missing_target_rows_removed": 0,
+  "retained_rows": 731,
+  "target": "cnt",
+  "excluded_features": [
+    "instant",
+    "dteday",
+    "casual",
+    "registered"
+  ],
+  "split_method": "chronological; floor(70% N), floor(15% N), remainder",
+  "feature_count": 37,
+  "splits": {
+    "train": {
+      "rows": 511,
+      "percentage": 69.9042,
+      "start": "2011-01-01",
+      "end": "2012-05-25",
+      "imputed_cells": {
+        "temp": 0,
+        "atemp": 0,
+        "hum": 0,
+        "windspeed": 0,
+        "yr": 0,
+        "holiday": 0,
+        "workingday": 0,
+        "season": 0,
+        "mnth": 0,
+        "weekday": 0,
+        "weathersit": 0
+      },
+      "unknown_categories": {
+        "season": 0,
+        "mnth": 0,
+        "weekday": 0,
+        "weathersit": 0
+      }
+    },
+    "validation": {
+      "rows": 109,
+      "percentage": 14.9111,
+      "start": "2012-05-26",
+      "end": "2012-09-11",
+      "imputed_cells": {
+        "temp": 0,
+        "atemp": 0,
+        "hum": 0,
+        "windspeed": 0,
+        "yr": 0,
+        "holiday": 0,
+        "workingday": 0,
+        "season": 0,
+        "mnth": 0,
+        "weekday": 0,
+        "weathersit": 0
+      },
+      "unknown_categories": {
+        "season": 0,
+        "mnth": 0,
+        "weekday": 0,
+        "weathersit": 0
+      }
+    },
+    "test": {
+      "rows": 111,
+      "percentage": 15.1847,
+      "start": "2012-09-12",
+      "end": "2012-12-31",
+      "imputed_cells": {
+        "temp": 0,
+        "atemp": 0,
+        "hum": 0,
+        "windspeed": 0,
+        "yr": 0,
+        "holiday": 0,
+        "workingday": 0,
+        "season": 0,
+        "mnth": 0,
+        "weekday": 0,
+        "weathersit": 0
+      },
+      "unknown_categories": {
+        "season": 0,
+        "mnth": 0,
+        "weekday": 0,
+        "weathersit": 0
+      }
+    }
+  }
+}

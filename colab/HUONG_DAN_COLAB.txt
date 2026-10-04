@@ -1,0 +1,58 @@
+CHẠY BIKE SHARING TRÊN GOOGLE COLAB
+
+1. Giải nén Bike_Sharing_Colab.zip trên máy tính.
+2. Trên Google Drive, tạo thư mục TT_CSN trong My Drive.
+3. Tải thư mục data chứa day.csv và hour.csv gốc vào TT_CSN.
+   Đường dẫn sau khi mount: /content/drive/MyDrive/TT_CSN/data/day.csv và hour.csv.
+4. Mở https://colab.research.google.com/, chọn Upload notebook và chọn Bike_Sharing_Colab.ipynb.
+5. Dùng runtime Python 3, CPU là đủ. Chạy các ô theo thứ tự từ trên xuống.
+6. Hàm connect_google_drive() sẽ yêu cầu đăng nhập/cấp quyền Drive trong Colab.
+7. Kết quả được lưu tự động tại MyDrive/TT_CSN/runs/<RUN_ID>/.
+
+Notebook chứa toàn bộ hàm, không cần tải colab_train.py lên Colab.
+File colab_train.py là bản mã nguồn để dùng lại ngoài notebook.
+
+CÁCH CHIA
+Theo thứ tự thời gian, không xáo trộn, xử lý hai bộ riêng biệt:
+day: train 511, validation 109, test 111.
+hour: train 12165, validation 2606, test 2608.
+Tỷ lệ xấp xỉ 70/15/15 do số dòng nguyên. Dữ liệu giờ có thể cắt giữa ngày.
+
+TIỀN XỬ LÝ
+Chỉ fit trên train: trung vị cho số; mode cho phân loại và nhị phân;
+one-hot cho season, mnth, weekday, weathersit, thêm hr với hour.
+Giữ yr, holiday, workingday dạng 0/1. Giữ các cột thời tiết đã chuẩn hóa.
+Danh mục mới được mã hóa toàn 0 trong nhóm one-hot tương ứng.
+Khác với script preprocess.py cũ, notebook dùng pipeline scikit-learn và không
+tạo cột _unknown riêng. Luôn dùng dữ liệu và model trong cùng một RUN_ID.
+Bỏ instant, dteday khỏi đặc trưng. Bỏ casual, registered vì gây rò rỉ cnt.
+Không điền nhãn cnt thiếu. Thiếu/sai ngày hoặc giờ sẽ báo lỗi.
+
+HUẤN LUYỆN VÀ ĐÁNH GIÁ
+RandomForestRegressor, 8 cấu hình mặc định. Chọn RMSE validation nhỏ nhất.
+Mô hình và bộ tiền xử lý chỉ học từ 70% train, không refit trên 85%.
+Sau khi chọn, đánh giá test bằng RMSE, MAE, R² và so sánh dự đoán trung bình train.
+Không điều chỉnh tham số dựa trên kết quả test. Chỉ số ngày và giờ có thang đo khác nhau.
+Notebook lưu đúng mô hình đã được đánh giá, kèm bộ tiền xử lý.
+
+CÁC FILE QUAN TRỌNG TRONG day/ VÀ hour/
+- splits/raw/train.csv, validation.csv, test.csv: đặc trưng gốc và cnt.
+- splits/train.csv, validation.csv, test.csv: đặc trưng số sau điền thiếu/one-hot và cnt.
+- model.joblib: dictionary gồm pipeline, features, target, dataset, versions, report.
+- preprocessor.joblib: bộ tiền xử lý đã fit trên train.
+- validation_results.csv: kết quả từng cấu hình trên validation.
+- selection.json: tham số đã chọn và tiêu chí lựa chọn.
+- metrics.json: kết quả đánh giá cuối, baseline và cấu hình.
+- test_predictions.csv: nhãn thật, dự đoán, sai số theo thứ tự test.
+- split_report.json và splits/split_manifest.csv: tỷ lệ, thời điểm và nguồn từng dòng.
+- environment.json, requirements.txt: phiên bản môi trường khi train.
+
+DỰ ĐOÁN LẠI
+Chạy các ô định nghĩa hàm, kết nối Drive và trỏ MODEL_PATH đến model.joblib đã lưu.
+predict_saved_model(MODEL_PATH, dataframe_moi) hoặc đường dẫn CSV mới.
+Đầu vào cần các cột đặc trưng GỐC; không cần cnt, casual, registered, instant, dteday.
+Không đưa CSV đã one-hot vào pipeline vì pipeline tự xử lý bước này.
+Dùng requirements.txt của lần train để khôi phục đúng phiên bản thư viện.
+
+Notebook chưa có kết quả train trên tài khoản Google của bạn; các kết quả và mô hình
+sẽ được tạo khi bạn chạy notebook trên Colab và cấp quyền truy cập Drive.

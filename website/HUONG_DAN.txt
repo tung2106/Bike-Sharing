@@ -1,0 +1,86 @@
+WEBSITE VELO — DỰ ĐOÁN LƯỢT THUÊ XE THEO GIỜ
+
+Website sử dụng đúng models/model.joblib tải từ thư mục hour được chia sẻ.
+Không huấn luyện lại; không sử dụng mô hình kiểm thử cục bộ trước đó.
+
+CHẠY TRÊN WINDOWS
+Trong thư mục TT_CSN, nhấp đúp MO_WEBSITE.cmd.
+Chương trình tự khởi động máy chủ và mở giao diện trên trình duyệt mặc định.
+Không cần gõ hoặc lưu link, không mở trực tiếp templates/index.html.
+Giữ cửa sổ máy chủ mở khi dùng; nhấn Ctrl+C để dừng.
+Nếu Velo đã chạy, file mở giao diện hiện có, không tạo máy chủ thứ hai.
+Website dùng mô hình và tài nguyên cục bộ, không cần Internet sau khi cài thư viện.
+
+Nếu chưa cài đặt, mở PowerShell trong thư mục website và chạy setup.ps1 một lần.
+Cách khởi động khác:
+Mở PowerShell trong thư mục website:
+    .\setup.ps1
+    .\start.ps1
+start.ps1 cũng tự mở giao diện trong trình duyệt.
+Yêu cầu Python 3.12 hoặc 3.13. Cài đặt thư viện chỉ cần lần đầu.
+Nếu máy chặn file PowerShell, dùng trực tiếp:
+    python -m venv .venv
+    .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+    .\.venv\Scripts\python.exe app.py
+
+Trên macOS/Linux:
+    python3 -m venv .venv
+    .venv/bin/python -m pip install -r requirements.txt
+    .venv/bin/python app.py
+
+CÁCH DÙNG
+Chọn ngày tham chiếu thuộc 2011–2012, giờ và trạng thái ngày lễ.
+Nhập nhiệt độ, nhiệt độ cảm nhận, độ ẩm, tốc độ gió và tình trạng thời tiết.
+Các trường số thời tiết có thể để trống: pipeline dùng trung vị học từ train.
+Nhấn Tính dự đoán. Kết quả là tổng lượt thuê của hệ thống trong một giờ.
+Không phải số xe còn sẵn tại từng trạm, và không phải số lượt thuê chắc chắn.
+
+ĐẶC TRƯNG VÀ QUY ĐỔI
+Năm: yr = năm - 2011, chỉ nhận 2011/2012 (đúng mã 0/1 đã học).
+Thứ: Chủ nhật=0, Thứ Hai=1, ... Thứ Bảy=6.
+Ngày làm việc: không phải thứ Bảy/Chủ nhật và không phải ngày lễ.
+Ngày lễ: người dùng chỉ định; website không áp lịch nghỉ của Việt Nam cho dữ liệu Mỹ.
+Mốc mùa theo dữ liệu: 21/3, 21/6, 23/9, 21/12.
+Mùa: 1=đông, 2=xuân, 3=hè, 4=thu.
+Theo tài liệu UCI dành riêng cho hour.csv:
+    temp = (nhiệt độ °C + 8) / 47
+    atemp = (nhiệt độ cảm nhận °C + 16) / 66
+    hum = độ ẩm % / 100
+    windspeed = tốc độ gió / 67
+Thang gió được trình bày bằng km/h, cùng quy ước phổ biến khi sử dụng bộ dữ liệu.
+Không dùng công thức chia 41 và chia 50 trong Readme cũ cho dữ liệu giờ.
+Đối chiếu: https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset
+
+TƯƠNG THÍCH MÔ HÌNH
+Phiên bản train được ghi trong models/environment.json.
+requirements.txt cố định các phiên bản numpy, pandas, scikit-learn và joblib đó.
+Colab dùng Python 3.13; bản website được kiểm thử trên Python 3.12 với cùng
+các phiên bản thư viện của mô hình. Không nâng scikit-learn tùy ý khi tải model.
+models/metrics.json lưu kết quả test để đối chiếu, giao diện đọc chỉ số trực tiếp
+từ bundle mô hình. Không coi MAE là khoảng tin cậy cho mỗi dự đoán.
+
+KIẾN TRÚC
+app.py: Flask API, kiểm tra đầu vào, đổi đơn vị và gọi pipeline.predict().
+templates/index.html: giao diện tiếng Việt.
+static/: kiểu dáng, tương tác, biểu tượng.
+models/: mô hình và thông tin gốc từ Colab.
+GET /api/model: tình trạng và chỉ số mô hình.
+POST /api/predict: dự đoán từ ngày, giờ và điều kiện thời tiết.
+Model chỉ tải ở máy chủ, không gửi file joblib tới trình duyệt.
+
+KIỂM TRA
+    .\.venv\Scripts\python.exe test_app.py
+Kiểm tra dự đoán API với pipeline gốc, đầu vào thiếu/sai, ánh xạ ngày và mùa,
+cũng như đối chiếu RMSE/MAE/R² trên tập test với kết quả đã lưu ở Colab.
+Bài kiểm tra chỉ đối chiếu mô hình cố định, không chọn lại tham số bằng test.
+File CSV gốc để đối chiếu nằm tại ../du_lieu/goc/hour.csv so với thư mục website.
+Nếu chỉ giải nén gói website riêng, kiểm tra đối chiếu CSV sẽ được bỏ qua khi thiếu file này.
+
+ĐƯA LÊN MẠNG
+Bản này chạy cục bộ. Có thể triển khai trên máy chủ hỗ trợ Python bằng Waitress:
+    waitress-serve --listen=0.0.0.0:8000 --call app:create_app
+Cần cài requirements.txt và đưa kèm models/model.joblib.
+Chưa triển khai hoặc cấu hình tên miền trong lần xây dựng bản cục bộ này.
+
+Dữ liệu: Hadi Fanaee-T, Bike Sharing, UCI Machine Learning Repository (2013).
+Mô hình học từ Capital Bikeshare, Washington D.C., 2011–2012.

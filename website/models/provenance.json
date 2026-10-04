@@ -1,0 +1,7 @@
+{
+  "source_folder": "https://drive.google.com/drive/folders/1miTjwTR4GtZxHWBCmgc75AG0UccHj9eY",
+  "model_file_id": "1Jm9op34TNy87Pl4bHTPhpIbUz2fNwJVf",
+  "sha256": "a0da8af0489b5764ff11c185e490d0586e1e50174e385f03d8a95957cb3c7ed0",
+  "retrained": false,
+  "verification": "Matched original Colab test RMSE, MAE and R2; API prediction round-trip and browser checks passed"
+}

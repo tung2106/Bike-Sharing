@@ -1,0 +1,62 @@
+TIỀN XỬ LÝ BIKE SHARING
+
+Mục tiêu giả định: dự đoán tổng số lượt thuê xe (cnt), bài toán hồi quy.
+Hai dataset được xử lý riêng, không ghép day.csv và hour.csv.
+
+KẾT QUẢ
+Dataset    Train (70%)    Validation (15%)    Test (15%)    Số đặc trưng
+day        511           109                 111           37
+hour       12165         2606                2608          63
+Số dòng được làm tròn xuống cho train và validation; test nhận phần còn lại.
+
+DỮ LIỆU THIẾU
+Hai file gốc hiện có 0 ô thiếu và 0 dòng trùng hoàn toàn.
+Quy trình vẫn hỗ trợ điền thiếu: trung vị cho temp, atemp, hum, windspeed;
+giá trị phổ biến nhất cho các cột phân loại và nhị phân. Khi hòa, lấy giá trị nhỏ nhất.
+Chỉ tính các giá trị điền thiếu trên train, sau đó áp dụng cho cả ba tập.
+Không xem số 0 là dữ liệu thiếu. Giá trị số vô hạn được coi là thiếu.
+Dòng thiếu nhãn cnt bị loại, không tự tạo nhãn. Dòng thiếu/sai ngày hoặc giờ
+sẽ báo lỗi vì không thể đặt đúng thứ tự thời gian. Trùng hoàn toàn được loại;
+các bản ghi khác nhau nhưng cùng thời điểm sẽ báo lỗi để kiểm tra.
+
+MÃ HÓA VÀ CHỌN CỘT
+- One-hot: season, mnth, weekday, weathersit; thêm hr cho hour.csv.
+- Giữ nhị phân 0/1: yr, holiday, workingday.
+- Giữ giá trị số: temp, atemp, hum, windspeed vốn đã được chuẩn hóa trong nguồn.
+  Không chuẩn hóa lại, không thay đổi thang đo của cnt.
+- Bộ danh mục chỉ học từ train. Danh mục mới bật cột <tên_cột>_unknown.
+- Bỏ instant (mã bản ghi), dteday (dùng để sắp xếp; đã có các cột lịch).
+- Bỏ casual, registered vì cnt = casual + registered, tránh rò rỉ nhãn.
+
+CHIA TẬP VÀ CÁCH DÙNG
+Sắp tăng dần theo ngày, thêm giờ đối với hour.csv, không xáo trộn.
+70% đầu dùng huấn luyện, 15% tiếp theo chọn siêu tham số, 15% cuối đánh giá.
+Chỉ dùng test sau khi đã chốt mô hình và siêu tham số.
+Với dữ liệu giờ, mốc chia có thể nằm giữa một ngày để giữ tỷ lệ theo số dòng.
+Hai bộ có mốc thời gian chia riêng; kết quả đánh giá không phải cùng một mục tiêu
+và không nên gộp các bản ghi ngày/giờ như các quan sát độc lập.
+Các cột thời tiết trong đầu vào phải có sẵn ở thời điểm dự đoán; bài toán dự báo
+trước thời điểm đó cần dữ liệu dự báo thời tiết tương ứng.
+
+Trong mỗi thư mục day/ và hour/:
+- train.csv, validation.csv, test.csv: toàn bộ đặc trưng số, cột cuối cnt là nhãn.
+- preprocessor.json: trung vị/mode, danh mục và thứ tự đặc trưng đã học từ train.
+- split_manifest.csv: mã và thời điểm gốc để đối chiếu; không dùng làm đặc trưng.
+- report.json: số dòng, tỷ lệ thực tế, khoảng thời gian và thống kê chất lượng.
+
+Ví dụ đọc dữ liệu cho thư viện học máy (cần pandas trong môi trường huấn luyện):
+    import pandas as pd
+    train = pd.read_csv('du_lieu/da_xu_ly/day/train.csv')
+    validation = pd.read_csv('du_lieu/da_xu_ly/day/validation.csv')
+    test = pd.read_csv('du_lieu/da_xu_ly/day/test.csv')
+    X_train, y_train = train.drop(columns='cnt'), train['cnt']
+    X_val, y_val = validation.drop(columns='cnt'), validation['cnt']
+    X_test, y_test = test.drop(columns='cnt'), test['cnt']
+    # model.fit(X_train, y_train)
+    # Chọn tham số dựa trên dự đoán X_val và y_val.
+    # Đánh giá cuối cùng trên X_test và y_test.
+
+Chạy lại từ thư mục dự án: python tien_xu_ly/preprocess.py
+Script chỉ dùng thư viện chuẩn Python, không cần cài thêm gói.
+File gốc nằm trong du_lieu/goc. Chạy lại cập nhật du_lieu/da_xu_ly/day và du_lieu/da_xu_ly/hour.
+Nguồn và mô tả cột: du_lieu/goc/Readme.txt đi kèm hai CSV gốc.

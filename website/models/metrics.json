@@ -1,0 +1,34 @@
+{
+  "dataset": "hour",
+  "test": {
+    "RMSE": 90.1641035755342,
+    "MAE": 61.35637480828221,
+    "R2": 0.8243372986215161
+  },
+  "baseline_test": {
+    "RMSE": 228.10613440286235,
+    "MAE": 168.93590867141225,
+    "R2": -0.12431019379632957
+  },
+  "baseline": "mean cnt from train",
+  "selection": {
+    "algorithm": "RandomForestRegressor",
+    "selection_metric": "validation RMSE",
+    "best_params": {
+      "max_depth": null,
+      "max_features": 1.0,
+      "min_samples_leaf": 1,
+      "n_estimators": 100
+    },
+    "best_validation_RMSE": 126.37997220296579,
+    "fit_partition": "train only (70%)",
+    "random_state": 42,
+    "candidate_count": 8,
+    "baseline_validation": {
+      "RMSE": 253.9265139010259,
+      "MAE": 194.07566887756886,
+      "R2": -0.2939012316275136
+    }
+  },
+  "evaluated_at_utc": "2026-10-04T01:51:19.799708+00:00"
+}

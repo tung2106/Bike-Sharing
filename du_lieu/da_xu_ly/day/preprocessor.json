@@ -1,0 +1,93 @@
+{
+  "fill_values": {
+    "temp": 0.458333,
+    "atemp": 0.450121,
+    "hum": 0.630833,
+    "windspeed": 0.189062,
+    "yr": 0.0,
+    "holiday": 0.0,
+    "workingday": 1.0,
+    "season": 1.0,
+    "mnth": 1.0,
+    "weekday": 0.0,
+    "weathersit": 1.0
+  },
+  "categories": {
+    "season": [
+      1.0,
+      2.0,
+      3.0,
+      4.0
+    ],
+    "mnth": [
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      7.0,
+      8.0,
+      9.0,
+      10.0,
+      11.0,
+      12.0
+    ],
+    "weekday": [
+      0.0,
+      1.0,
+      2.0,
+      3.0,
+      4.0,
+      5.0,
+      6.0
+    ],
+    "weathersit": [
+      1.0,
+      2.0,
+      3.0
+    ]
+  },
+  "feature_names": [
+    "temp",
+    "atemp",
+    "hum",
+    "windspeed",
+    "yr",
+    "holiday",
+    "workingday",
+    "season_1",
+    "season_2",
+    "season_3",
+    "season_4",
+    "season_unknown",
+    "mnth_1",
+    "mnth_2",
+    "mnth_3",
+    "mnth_4",
+    "mnth_5",
+    "mnth_6",
+    "mnth_7",
+    "mnth_8",
+    "mnth_9",
+    "mnth_10",
+    "mnth_11",
+    "mnth_12",
+    "mnth_unknown",
+    "weekday_0",
+    "weekday_1",
+    "weekday_2",
+    "weekday_3",
+    "weekday_4",
+    "weekday_5",
+    "weekday_6",
+    "weekday_unknown",
+    "weathersit_1",
+    "weathersit_2",
+    "weathersit_3",
+    "weathersit_unknown"
+  ],
+  "target": "cnt",
+  "numeric_scaling": "preserve original normalized values",
+  "fit_partition": "train"
+}

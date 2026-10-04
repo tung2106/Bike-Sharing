@@ -1,0 +1,68 @@
+CẤU TRÚC DỰ ÁN TT_CSN
+
+MO_WEBSITE.cmd          Nhấp đúp để tự khởi động và mở website, không cần nhập link.
+
+du_lieu/
+  goc/                  day.csv, hour.csv và Readme.txt gốc.
+  da_xu_ly/             Dữ liệu đã tiền xử lý bằng script Python ban đầu.
+    day/                train.csv, validation.csv, test.csv, thông số xử lý, báo cáo.
+    hour/               Các file tương tự cho dữ liệu theo giờ.
+    HUONG_DAN.txt        Cách dùng các file đã chia.
+
+tien_xu_ly/
+  preprocess.py         Xử lý thiếu, mã hóa, chia 70/15/15 và xuất CSV.
+
+colab/
+  Bike_Sharing_Colab.ipynb  Notebook sẵn sàng tải lên Colab.
+  colab_train.py           Hàm chia dữ liệu, train, chọn tham số, đánh giá và lưu model.
+  build_colab_notebook.py  Tạo lại notebook và gói ZIP Colab từ mã nguồn.
+  verify_colab.py          Kiểm thử quy trình Colab trên máy với lưới tham số nhỏ.
+  HUONG_DAN_COLAB.txt      Hướng dẫn sử dụng trên Google Drive/Colab.
+  ket_qua/
+    Colab_shared_review.ipynb  Bản tải về có kết quả chạy thực tế trên Colab.
+
+website/
+  app.py                  Máy chủ và API dự đoán.
+  templates/              Giao diện HTML.
+  static/                 CSS, JavaScript và biểu tượng.
+  models/                 Mô hình hour thật, metrics, phiên bản và nguồn tải.
+  setup.ps1, start.ps1    Cài đặt và khởi động website.
+  open_website.py         Tự mở trình duyệt khi mô hình đã sẵn sàng.
+  requirements*.txt      Danh sách thư viện.
+  test_app.py             Kiểm thử API và đối chiếu mô hình.
+  check_browser.cjs       Kiểm thử giao diện tự động.
+  HUONG_DAN.txt           Hướng dẫn chạy website.
+  .venv/                  Môi trường đang dùng để chạy website; cần giữ lại.
+
+ban_dong_goi/
+  Bike_Sharing_Colab.zip  Notebook, code và dữ liệu gốc để đưa lên Colab.
+  Velo_Hour_Website.zip   Website kèm mô hình; không chứa môi trường ảo hoặc cache.
+
+rac/
+  cache/                 Cache Python đã dọn khỏi các thư mục làm việc.
+  trang_tai_tam/         Bản HTML tạm của trang Google Drive.
+  kiem_thu/              Mô hình thử nghiệm, kết quả tạm và ảnh kiểm tra giao diện.
+  moi_truong_cu/         Môi trường dùng để kiểm thử Colab trước đây.
+  ban_dong_goi_cu/       Gói ZIP trước khi sắp xếp; đã có gói mới ở ban_dong_goi.
+  nhat_ky/              Danh sách đường dẫn cũ/mới để đối chiếu việc di chuyển.
+  HUONG_DAN.txt           Giải thích nội dung thư mục rác.
+
+LỆNH THƯỜNG DÙNG (CHẠY TỪ THƯ MỤC TT_CSN)
+Tiền xử lý lại:
+  python tien_xu_ly/preprocess.py
+Tạo lại notebook và gói Colab:
+  python colab/build_colab_notebook.py
+Mở website:
+  Nhấp đúp MO_WEBSITE.cmd, hoặc chạy .\website\start.ps1.
+  Trình duyệt tự mở. Giữ cửa sổ máy chủ mở khi sử dụng.
+Kiểm thử website:
+  .\website\.venv\Scripts\python.exe -B website/test_app.py
+
+LƯU Ý
+- Cấu trúc trên là của máy tính này. Đường dẫn Google Drive của notebook vẫn là
+  MyDrive/TT_CSN/data và MyDrive/TT_CSN/runs, không cần đổi trên Colab.
+- du_lieu/da_xu_ly là đầu ra của preprocess.py. Mô hình website dùng pipeline
+  scikit-learn riêng đã lưu trong website/models/model.joblib.
+- Bản notebook có kết quả thật và mô hình website không phải file rác.
+- Không có file nào bị xóa trong lần sắp xếp này.
+- Không di chuyển website/.venv vì các môi trường Python chứa đường dẫn cài đặt.
