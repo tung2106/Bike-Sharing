@@ -53,6 +53,19 @@
           <div class="result-facts"><div><span>Thời điểm</span><strong id="result-time">—</strong></div><div><span>Thời tiết</span><strong id="result-weather">—</strong></div></div>
           <p id="imputation-note" class="imputation-note" hidden></p>
         </section>
+        <section class="quality-panel chart-panel" aria-labelledby="chart-title">
+          <div class="panel-heading"><h2 id="chart-title">Lượt thuê theo giờ</h2><span class="small-tag">24 GIỜ</span></div>
+          <p class="field-help">Ước tính cho ngày đã chọn, giữ nguyên điều kiện thời tiết ở cả 24 giờ.</p>
+          <p id="chart-status" class="field-help" role="status">Chọn “Tính dự đoán” để xem biểu đồ.</p>
+          <div id="hourly-chart" class="hourly-chart" hidden></div>
+          <section class="peak-hours" aria-labelledby="peak-title">
+            <h3 id="peak-title">3 giờ cao điểm dự đoán</h3>
+            <p id="peak-status" class="field-help" role="status">Chọn “Tính dự đoán” để xem 3 khung giờ có lượt thuê ước tính cao nhất.</p>
+            <ol id="peak-list" class="peak-list" hidden></ol>
+            <p id="peak-note" class="field-help" hidden>Xếp hạng theo dự đoán chưa làm tròn; nếu bằng nhau, ưu tiên giờ sớm hơn. Giữ nguyên thời tiết đã nhập ở cả 24 giờ.</p>
+          </section>
+          <details id="hourly-details" hidden><summary>Xem số liệu từng giờ</summary><div class="hourly-table-wrap"><table><caption id="hourly-caption"></caption><thead><tr><th scope="col">Khung giờ</th><th scope="col">Lượt thuê ước tính</th></tr></thead><tbody id="hourly-rows"></tbody></table></div></details>
+        </section>
         <section class="quality-panel" aria-labelledby="quality-title">
           <div class="panel-heading"><h2 id="quality-title">Hiệu quả đã kiểm thử</h2><span class="small-tag">TẬP TEST</span></div>
           <div class="metrics"><div><span>R²</span><strong id="r2-value">—</strong></div><div><span>MAE <small>lượt/giờ</small></span><strong id="mae-value">—</strong></div><div><span>RMSE</span><strong id="rmse-value">—</strong></div></div>

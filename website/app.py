@@ -142,13 +142,19 @@ def create_app(model_path=None):
         except ValueError as error:
             return jsonify(error=str(error)), 400
         try:
-            value = float(bundle['pipeline'].predict(frame)[0])
-            if not math.isfinite(value) or value < 0:
+            hourly_frame = pd.concat([frame] * 24, ignore_index=True)
+            hourly_frame['hr'] = range(24)
+            values = np.asarray(bundle['pipeline'].predict(hourly_frame), dtype=float)
+            if values.shape != (24,) or not np.isfinite(values).all() or (values < 0).any():
                 raise ValueError('Giá trị dự đoán không hợp lệ')
+            value = float(values[int(frame.iloc[0]['hr'])])
+            hourly = [{'hour': hour, 'prediction': float(count),
+                       'rounded_prediction': int(math.floor(count + 0.5))}
+                      for hour, count in enumerate(values)]
             missing = [c for c in FEATURES if pd.isna(frame.iloc[0][c])]
             return jsonify(prediction=value, rounded_prediction=int(math.floor(value + 0.5)),
                            date=day.isoformat(), hour=int(frame.iloc[0]['hr']),
-                           imputed_features=missing,
+                           imputed_features=missing, hourly=hourly,
                            features={c: None if pd.isna(frame.iloc[0][c]) else float(frame.iloc[0][c]) for c in FEATURES})
         except Exception:
             app.logger.exception('Prediction failed')

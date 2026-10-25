@@ -54,6 +54,19 @@ class WebsiteTests(unittest.TestCase):
         self.assertEqual(response.json['imputed_features'], ['temp', 'atemp', 'hum', 'windspeed'])
         self.assertTrue(np.isfinite(response.json['prediction']))
 
+    def test_hourly_chart_matches_pipeline_and_selected_hour(self):
+        for selected in [0, 8, 23]:
+            payload = self.payload()
+            payload['hour'] = selected
+            response = self.client.post('/api/predict', json=payload)
+            self.assertEqual(response.status_code, 200)
+            hourly = response.json['hourly']
+            self.assertEqual([p['hour'] for p in hourly], list(range(24)))
+            frames = [make_input({**payload, 'hour': hour})[0] for hour in range(24)]
+            expected = self.bundle['pipeline'].predict(pd.concat(frames, ignore_index=True))
+            np.testing.assert_allclose([p['prediction'] for p in hourly], expected)
+            self.assertEqual(hourly[selected]['rounded_prediction'], response.json['rounded_prediction'])
+
     def test_invalid_inputs(self):
         for key, bad in [('date', '2026-10-04'), ('date', '2012-02-30'),
                          ('hour', 24), ('hour', 1.5), ('hour', None),
