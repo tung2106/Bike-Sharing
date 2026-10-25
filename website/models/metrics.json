@@ -1,34 +1,57 @@
 {
-  "dataset": "hour",
   "test": {
+    "RMSE": 82.07304035839987,
+    "MAE": 54.66903265593047,
+    "R2": 0.8544496471509435
+  },
+  "baseline_test": {
     "RMSE": 90.1641035755342,
     "MAE": 61.35637480828221,
     "R2": 0.8243372986215161
   },
-  "baseline_test": {
-    "RMSE": 228.10613440286235,
-    "MAE": 168.93590867141225,
-    "R2": -0.12431019379632957
+  "comparison": [
+    {
+      "model": "Random Forest 85%",
+      "RMSE": 82.07304035839987,
+      "MAE": 54.66903265593047,
+      "R2": 0.8544496471509435
+    },
+    {
+      "model": "HistGradientBoosting 85%",
+      "RMSE": 63.79291816946025,
+      "MAE": 40.577688896867045,
+      "R2": 0.912065933607608
+    }
+  ],
+  "evaluation_note": "Previously viewed historical test; not independent confirmation or regional deployment validation.",
+  "split": {
+    "train_rows": 14771,
+    "test_rows": 2608,
+    "train_end": "2012-09-12 15:00:00",
+    "test_start": "2012-09-12 16:00:00",
+    "test_end": "2012-12-31 23:00:00"
   },
-  "baseline": "mean cnt from train",
   "selection": {
-    "algorithm": "RandomForestRegressor",
-    "selection_metric": "validation RMSE",
     "best_params": {
+      "bootstrap": true,
+      "ccp_alpha": 0.0,
+      "criterion": "squared_error",
       "max_depth": null,
       "max_features": 1.0,
+      "max_leaf_nodes": null,
+      "max_samples": null,
+      "min_impurity_decrease": 0.0,
       "min_samples_leaf": 1,
-      "n_estimators": 100
+      "min_samples_split": 2,
+      "min_weight_fraction_leaf": 0.0,
+      "monotonic_cst": null,
+      "n_estimators": 100,
+      "n_jobs": 4,
+      "oob_score": false,
+      "random_state": 42,
+      "verbose": 0,
+      "warm_start": false
     },
-    "best_validation_RMSE": 126.37997220296579,
-    "fit_partition": "train only (70%)",
-    "random_state": 42,
-    "candidate_count": 8,
-    "baseline_validation": {
-      "RMSE": 253.9265139010259,
-      "MAE": 194.07566887756886,
-      "R2": -0.2939012316275136
-    }
-  },
-  "evaluated_at_utc": "2026-10-04T01:51:19.799708+00:00"
+    "policy": "Original RF hyperparameters; only refit on first 85%, no new tuning."
+  }
 }

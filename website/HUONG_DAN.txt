@@ -1,14 +1,25 @@
-WEBSITE VELO — DỰ ĐOÁN LƯỢT THUÊ XE THEO GIỜ
+WEBSITE BIKE RENTAL — DỰ ĐOÁN LƯỢT THUÊ XE THEO GIỜ
 
-Website sử dụng đúng models/model.joblib tải từ thư mục hour được chia sẻ.
-Không huấn luyện lại; không sử dụng mô hình kiểm thử cục bộ trước đó.
+NHÁNH main: Random Forest huấn luyện lại trên 85% dữ liệu hour.csv.
+Mô hình mặc định: website/models/model.joblib.
+Train: 14.771 dòng đầu theo thời gian, đến 2012-09-12 15:00.
+Test: 2.608 dòng cuối, từ 2012-09-12 16:00 đến 2012-12-31 23:00.
+Giữ cấu hình RF gốc (100 cây), chỉ huấn luyện lại trên nhiều dữ liệu hơn.
+MAE: 54,6690; RMSE: 82,0730; R²: 0,85445.
+So sánh cùng tập test với HGB trong models/comparison.csv.
+Đây là tập test lịch sử đã được xem trước, chưa kiểm chứng triển khai thực tế.
+Nhánh phien-ban-2 dùng HistGradientBoosting và không bị thay đổi bởi cập nhật này.
+Mô hình RF 70% vẫn có trong lịch sử Git trước commit cập nhật.
+Nếu từng đặt BIKE_MODEL_PATH, hãy bỏ biến đó để dùng mô hình mặc định của main:
+    Remove-Item Env:BIKE_MODEL_PATH -ErrorAction SilentlyContinue
+Giao diện và chức năng khám phá dữ liệu lịch sử được giữ nguyên.
 
 CHẠY TRÊN WINDOWS
 Trong thư mục TT_CSN, nhấp đúp MO_WEBSITE.cmd.
 Chương trình tự khởi động máy chủ và mở giao diện trên trình duyệt mặc định.
 Không cần gõ hoặc lưu link, không mở trực tiếp templates/index.html.
 Giữ cửa sổ máy chủ mở khi dùng; nhấn Ctrl+C để dừng.
-Nếu Velo đã chạy, file mở giao diện hiện có, không tạo máy chủ thứ hai.
+Nếu Bike Rental đã chạy, file mở giao diện hiện có, không tạo máy chủ thứ hai.
 Website dùng mô hình và tài nguyên cục bộ, không cần Internet sau khi cài thư viện.
 
 Nếu chưa cài đặt, mở PowerShell trong thư mục website và chạy setup.ps1 một lần.

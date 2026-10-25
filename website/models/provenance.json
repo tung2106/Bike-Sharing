@@ -1,7 +1,6 @@
 {
-  "source_folder": "https://drive.google.com/drive/folders/1miTjwTR4GtZxHWBCmgc75AG0UccHj9eY",
-  "model_file_id": "1Jm9op34TNy87Pl4bHTPhpIbUz2fNwJVf",
-  "sha256": "a0da8af0489b5764ff11c185e490d0586e1e50174e385f03d8a95957cb3c7ed0",
-  "retrained": false,
-  "verification": "Matched original Colab test RMSE, MAE and R2; API prediction round-trip and browser checks passed"
+  "source_sha256": "e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f",
+  "original_model_sha256": "a0da8af0489b5764ff11c185e490d0586e1e50174e385f03d8a95957cb3c7ed0",
+  "model_sha256": "25ae1d41318ccdc6f1d7056dcd3c09bf4f2133051e9bab864755560fa01aa42a",
+  "script_sha256": "0ebdb2745cbe83c37ad767dca5b8baea4b6503e5cb0e7124f58a9cc0cc011efe"
 }
