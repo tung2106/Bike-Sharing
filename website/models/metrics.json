@@ -1,34 +1,76 @@
 {
-  "dataset": "hour",
   "test": {
-    "RMSE": 90.1641035755342,
-    "MAE": 61.35637480828221,
-    "R2": 0.8243372986215161
+    "MAE": 40.577688896867045,
+    "RMSE": 63.79291816946025,
+    "R2": 0.912065933607608
   },
   "baseline_test": {
-    "RMSE": 228.10613440286235,
-    "MAE": 168.93590867141225,
-    "R2": -0.12431019379632957
+    "MAE": 61.35637480828221,
+    "RMSE": 90.1641035755342,
+    "R2": 0.8243372986215161
   },
-  "baseline": "mean cnt from train",
+  "baseline": "Original deployed Random Forest trained on 70%",
   "selection": {
-    "algorithm": "RandomForestRegressor",
-    "selection_metric": "validation RMSE",
+    "candidate": "hist_boost_poisson",
+    "algorithm": "HistGradientBoostingRegressor",
     "best_params": {
+      "categorical_features": null,
+      "early_stopping": false,
+      "interaction_cst": null,
+      "l2_regularization": 5,
+      "learning_rate": 0.06,
+      "loss": "poisson",
+      "max_bins": 255,
       "max_depth": null,
       "max_features": 1.0,
-      "min_samples_leaf": 1,
-      "n_estimators": 100
+      "max_iter": 400,
+      "max_leaf_nodes": 31,
+      "min_samples_leaf": 20,
+      "monotonic_cst": null,
+      "n_iter_no_change": 10,
+      "quantile": null,
+      "random_state": 42,
+      "scoring": "loss",
+      "tol": 1e-07,
+      "validation_fraction": 0.1,
+      "verbose": 0,
+      "warm_start": false
     },
-    "best_validation_RMSE": 126.37997220296579,
-    "fit_partition": "train only (70%)",
-    "random_state": 42,
-    "candidate_count": 8,
-    "baseline_validation": {
-      "RMSE": 253.9265139010259,
-      "MAE": 194.07566887756886,
-      "R2": -0.2939012316275136
+    "selection_metric": "pooled validation MAE across 3 chronological folds",
+    "fit_partition": "first 85%; selected before test evaluation",
+    "validation": {
+      "candidate": "hist_boost_poisson",
+      "RMSE": 75.9782677836928,
+      "MAE": 50.264090952023075,
+      "R2": 0.8646062678803155
     }
   },
-  "evaluated_at_utc": "2026-10-04T01:51:19.799708+00:00"
+  "evaluated_at_utc": "2026-10-25T02:42:30.849401+00:00",
+  "evaluation_note": "Previously viewed historical test; exploratory, not independent final evidence.",
+  "comparison": [
+    {
+      "model": "original_saved_70",
+      "RMSE": 90.1641035755342,
+      "MAE": 61.35637480828221,
+      "R2": 0.8243372986215161
+    },
+    {
+      "model": "selected_70",
+      "RMSE": 67.97144697036337,
+      "MAE": 44.1494809733489,
+      "R2": 0.900169039596672
+    },
+    {
+      "model": "original_refit_85",
+      "RMSE": 82.07304035839987,
+      "MAE": 54.66903265593047,
+      "R2": 0.8544496471509435
+    },
+    {
+      "model": "selected_refit_85",
+      "RMSE": 63.79291816946025,
+      "MAE": 40.577688896867045,
+      "R2": 0.912065933607608
+    }
+  ]
 }

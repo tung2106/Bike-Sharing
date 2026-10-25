@@ -1,7 +1,40 @@
 {
-  "source_folder": "https://drive.google.com/drive/folders/1miTjwTR4GtZxHWBCmgc75AG0UccHj9eY",
-  "model_file_id": "1Jm9op34TNy87Pl4bHTPhpIbUz2fNwJVf",
-  "sha256": "a0da8af0489b5764ff11c185e490d0586e1e50174e385f03d8a95957cb3c7ed0",
-  "retrained": false,
-  "verification": "Matched original Colab test RMSE, MAE and R2; API prediction round-trip and browser checks passed"
+  "source_sha256": "e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f",
+  "model_sha256": "e5ca0f27d190ea778d5cab98d3891c007abceaffc6943498f2047bf4e2ba4433",
+  "script_sha256": "3a1ab262023e511d1b61cb8e908daa10ec4488bb0f9b0c96d8a9dc20c5828eb2",
+  "selection": {
+    "candidate": "hist_boost_poisson",
+    "algorithm": "HistGradientBoostingRegressor",
+    "best_params": {
+      "categorical_features": null,
+      "early_stopping": false,
+      "interaction_cst": null,
+      "l2_regularization": 5,
+      "learning_rate": 0.06,
+      "loss": "poisson",
+      "max_bins": 255,
+      "max_depth": null,
+      "max_features": 1.0,
+      "max_iter": 400,
+      "max_leaf_nodes": 31,
+      "min_samples_leaf": 20,
+      "monotonic_cst": null,
+      "n_iter_no_change": 10,
+      "quantile": null,
+      "random_state": 42,
+      "scoring": "loss",
+      "tol": 1e-07,
+      "validation_fraction": 0.1,
+      "verbose": 0,
+      "warm_start": false
+    },
+    "selection_metric": "pooled validation MAE across 3 chronological folds",
+    "fit_partition": "first 85%; selected before test evaluation",
+    "validation": {
+      "candidate": "hist_boost_poisson",
+      "RMSE": 75.9782677836928,
+      "MAE": 50.264090952023075,
+      "R2": 0.8646062678803155
+    }
+  }
 }

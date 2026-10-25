@@ -1,14 +1,26 @@
-WEBSITE VELO — DỰ ĐOÁN LƯỢT THUÊ XE THEO GIỜ
+WEBSITE BIKE RENTAL — DỰ ĐOÁN LƯỢT THUÊ XE THEO GIỜ
 
-Website sử dụng đúng models/model.joblib tải từ thư mục hour được chia sẻ.
-Không huấn luyện lại; không sử dụng mô hình kiểm thử cục bộ trước đó.
+NHÁNH phien-ban-2: models/model.joblib là HistGradientBoostingRegressor.
+Mô hình được chọn qua 3 lượt đánh giá theo thời gian và huấn luyện lại trên 85% đầu.
+Test lịch sử: MAE 40,58; RMSE 63,79; R² 0,912. Tập test đã được xem trước,
+chưa chứng minh khả năng dự báo ở khu vực mới. Nhánh main dùng Random Forest.
+Không đặt BIKE_MODEL_PATH trỏ đến mô hình khác nếu muốn dùng mặc định của nhánh.
+
+Giao diện xanh trắng và mục Khám phá dữ liệu lịch sử dùng chung ở cả hai nhánh.
+Lịch sử đọc du_lieu/goc/hour.csv; đây là dữ liệu thực tế, không phải dự đoán.
+
+Tái lập thử nghiệm từ thư mục gốc repository:
+    website\.venv\Scripts\python.exe experiments/hourly_v2/train_experiment.py
+Mô hình RF gốc làm đối chứng nằm trong experiments/hourly_v2/baseline/model.joblib.
+Kết quả mới nằm trong experiments/hourly_v2/runs/<thời gian UTC>/.
+Các mô hình thử nghiệm kết hợp RF + HGB không thuộc phiên bản này.
 
 CHẠY TRÊN WINDOWS
 Trong thư mục TT_CSN, nhấp đúp MO_WEBSITE.cmd.
 Chương trình tự khởi động máy chủ và mở giao diện trên trình duyệt mặc định.
 Không cần gõ hoặc lưu link, không mở trực tiếp templates/index.html.
 Giữ cửa sổ máy chủ mở khi dùng; nhấn Ctrl+C để dừng.
-Nếu Velo đã chạy, file mở giao diện hiện có, không tạo máy chủ thứ hai.
+Nếu Bike Rental đã chạy, file mở giao diện hiện có, không tạo máy chủ thứ hai.
 Website dùng mô hình và tài nguyên cục bộ, không cần Internet sau khi cài thư viện.
 
 Nếu chưa cài đặt, mở PowerShell trong thư mục website và chạy setup.ps1 một lần.
