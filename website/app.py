@@ -98,6 +98,8 @@ def load_model(model_path):
 
 def create_app(model_path=None):
     app = Flask(__name__)
+    from history import register_history
+    register_history(app)
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024
     path = Path(model_path or os.environ.get('BIKE_MODEL_PATH', ROOT / 'models' / 'model.joblib'))
     bundle, load_error = None, None
@@ -125,7 +127,8 @@ def create_app(model_path=None):
         if bundle is None:
             return jsonify(ready=False, error=load_error), 503
         report = bundle.get('report', {})
-        return jsonify(ready=True, name='Random Forest · theo giờ', dataset='hour',
+        return jsonify(ready=True, name=bundle.get('name', 'Random Forest · theo giờ'), dataset='hour',
+                       evaluation_note=report.get('evaluation_note'),
                        years=[2011, 2012], test=report.get('test', {}),
                        baseline=report.get('baseline_test', {}),
                        parameters=report.get('selection', {}).get('best_params', {}),

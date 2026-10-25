@@ -107,6 +107,13 @@ async function loadModel() {
     modelReady = true;
     $('model-status').textContent = 'Mô hình đã sẵn sàng';
     $('model-status').className = 'status ready';
+    if ($('active-model-name')) $('active-model-name').textContent = info.name;
+    if ($('evaluation-note')) {
+      $('evaluation-note').textContent = info.evaluation_note
+      ? 'Bản thử nghiệm: tập test lịch sử đã được xem trước đó; chưa kiểm chứng dự báo thực tế ở khu vực mới.'
+      : '';
+      $('evaluation-note').hidden = !info.evaluation_note;
+    }
     for (const [id, key] of [['r2-value', 'R2'], ['mae-value', 'MAE'], ['rmse-value', 'RMSE']]) {
       $(id).textContent = typeof info.test[key] === 'number' ? numberFormat.format(info.test[key]) : '—';
     }

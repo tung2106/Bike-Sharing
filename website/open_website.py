@@ -1,5 +1,7 @@
 """Open the local website with one double-click, reusing an existing server."""
 import json
+import hashlib
+import os
 import socket
 import subprocess
 import sys
@@ -19,7 +21,8 @@ def website_ready():
         with HTTP.open(BASE_URL + '/api/model', timeout=2) as response:
             info = json.load(response)
         return (info.get('ready') is True and info.get('dataset') == 'hour'
-                and info.get('name') == 'Random Forest · theo giờ')
+                and info.get('model_sha256') == hashlib.sha256(
+                    Path(os.environ.get('BIKE_MODEL_PATH', ROOT / 'models/model.joblib')).read_bytes()).hexdigest())
     except (OSError, ValueError, TypeError, AttributeError):
         return False
 
@@ -41,9 +44,9 @@ def main():
         open_browser()
         return
     if port_in_use():
-        raise RuntimeError('Cong 8000 dang duoc su dung nhung mo hinh Velo chua san sang. '
+        raise RuntimeError('Cong 8000 dang duoc su dung nhung mo hinh Bike Rental chua san sang. '
                            'Kiem tra cua so may chu dang chay; khong khoi dong them mot ban.')
-    print('Dang khoi dong Velo. Trinh duyet se tu mo khi mo hinh san sang.', flush=True)
+    print('Dang khoi dong Bike Rental. Trinh duyet se tu mo khi mo hinh san sang.', flush=True)
     server = subprocess.Popen([sys.executable, '-B', str(ROOT / 'app.py')], cwd=ROOT)
     try:
         deadline = time.monotonic() + 60

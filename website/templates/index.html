@@ -2,23 +2,24 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Velo · Dự đoán lượt thuê xe</title>
+  <title>Bike Rental</title>
   <meta name="description" content="Ước tính số lượt thuê xe đạp theo giờ từ mô hình Bike Sharing đã huấn luyện.">
   <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+<script defer src="{{ url_for('static', filename='history.js') }}"></script>
 </head>
 <body>
   <a class="skip" href="#main">Đến nội dung chính</a>
   <aside class="rail" aria-label="Thông tin ứng dụng">
-    <a class="brand" href="/" aria-label="Velo, trang chủ"><span class="brand-mark">V</span><span>velo<span class="brand-dot">.</span></span></a>
+    <a class="brand" href="/" aria-label="Bike Rental, trang chủ"><span>Bike Rental</span></a>
     <div class="rail-title">BIKE SHARING</div>
     <div class="rail-active"><span aria-hidden="true">◷</span> Dự đoán theo giờ</div>
     <div class="rail-bottom"><span class="mini-line"></span><strong>Mỗi giờ, một góc nhìn.</strong><p>Dữ liệu Capital Bikeshare<br>Washington, D.C. · 2011–2012</p></div>
   </aside>
   <main id="main">
     <header class="topbar"><span>Không gian dự đoán</span><span class="status" id="model-status">Đang kết nối mô hình…</span></header>
-    <section class="page-heading"><div><div class="eyebrow">NHU CẦU DI CHUYỂN</div><h1>Dự đoán lượt thuê xe</h1><p>Chọn một thời điểm và điều kiện thời tiết để ước tính nhu cầu theo giờ.</p></div><span class="model-tag">Mô hình theo giờ</span></section>
+    <section class="page-heading"><div><div class="eyebrow">NHU CẦU DI CHUYỂN</div><h1>Dự đoán lượt thuê xe</h1><p>Chọn một thời điểm và điều kiện thời tiết để ước tính nhu cầu theo giờ.</p></div><img class="hero-bike" src="{{ url_for('static', filename='bike-sky.png') }}" alt="Xe đạp màu xanh da trời" width="300" height="200"></section>
     <div class="workspace">
       <section class="input-panel" aria-labelledby="input-title">
         <div class="panel-heading"><h2 id="input-title">Thiết lập dự đoán</h2><span class="step-label">01 / ĐẦU VÀO</span></div>
@@ -68,13 +69,39 @@
         </section>
         <section class="quality-panel" aria-labelledby="quality-title">
           <div class="panel-heading"><h2 id="quality-title">Hiệu quả đã kiểm thử</h2><span class="small-tag">TẬP TEST</span></div>
+          <p id="active-model-name" class="field-help">Đang tải tên mô hình…</p>
+          <p id="evaluation-note" class="field-help" hidden></p>
           <div class="metrics"><div><span>R²</span><strong id="r2-value">—</strong></div><div><span>MAE <small>lượt/giờ</small></span><strong id="mae-value">—</strong></div><div><span>RMSE</span><strong id="rmse-value">—</strong></div></div>
           <p class="quality-note">MAE là sai lệch tuyệt đối trung bình trên tập test, không phải khoảng tin cậy cho từng dự đoán.</p>
         </section>
         <section class="context-note"><span class="info-icon" aria-hidden="true">i</span><div><h2>Đọc kết quả đúng bối cảnh</h2><p>Mô hình ước tính tổng lượt thuê của hệ thống Capital Bikeshare trong một giờ, không phải số xe còn trống ở một trạm. Dữ liệu 2011–2012 chưa xác nhận khả năng dự báo nhu cầu hiện tại.</p></div></section>
       </div>
     </div>
-    <footer><span>Velo · Bike Sharing Prediction</span><a href="https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset" target="_blank" rel="noopener noreferrer">Nguồn dữ liệu: UCI Bike Sharing</a></footer>
+
+    <section class="quality-panel history-panel" aria-labelledby="history-title">
+      <div class="panel-heading"><h2 id="history-title">Khám phá dữ liệu lịch sử</h2><span class="small-tag">SỐ LIỆU THỰC TẾ</span></div>
+      <p class="field-help">Capital Bikeshare · 2011–2012 · Nguồn hour.csv. Thống kê dữ liệu đã ghi nhận, không phải kết quả dự đoán.</p>
+      <form id="history-form" class="history-filters">
+        <label>Từ ngày<input name="start" type="date" min="2011-01-01" max="2012-12-31" value="2011-01-01" required></label>
+        <label>Đến ngày<input name="end" type="date" min="2011-01-01" max="2012-12-31" value="2012-12-31" required></label>
+        <label>Loại ngày<select name="workingday"><option value="all">Tất cả</option><option value="1">Ngày làm việc</option><option value="0">Ngày nghỉ / ngày lễ</option></select></label>
+        <button class="primary-button" type="submit">Xem dữ liệu</button>
+      </form>
+      <p id="history-status" class="field-help" role="status"></p>
+      <div id="history-results" hidden>
+        <div class="history-metrics">
+          <div><span>Tổng lượt thuê</span><strong id="history-total"></strong></div>
+          <div><span>Trung bình / bản ghi giờ</span><strong id="history-average"></strong></div>
+          <div><span>Khách vãng lai (casual)</span><strong id="history-casual"></strong></div>
+          <div><span>Khách đăng ký (registered)</span><strong id="history-registered"></strong></div>
+        </div>
+        <p>Giờ có trung bình cao nhất: <strong id="history-peak"></strong></p>
+        <div id="history-chart" class="hourly-chart"></div>
+        <p class="field-help">Mỗi điểm = tổng lượt thuê ở giờ đó ÷ số bản ghi của giờ đó sau khi lọc. Giờ thiếu dữ liệu không được tính là 0. Nếu bằng nhau, chọn giờ sớm hơn.</p>
+        <details class="chart-panel"><summary>Xem bảng số liệu và số mẫu</summary><div class="hourly-table-wrap"><table><caption>Lượt thuê thực tế trung bình theo giờ sau khi lọc</caption><thead><tr><th>Giờ</th><th>Trung bình lượt thuê</th><th>Số bản ghi</th></tr></thead><tbody id="history-rows"></tbody></table></div></details>
+      </div>
+    </section>
+    <footer><span>Bike Rental</span><a href="https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset" target="_blank" rel="noopener noreferrer">Nguồn dữ liệu: UCI Bike Sharing</a></footer>
   </main>
 </body>
 </html>
