@@ -204,6 +204,107 @@
       }
     }
   });
+  let slotRequest = null;
+  let slotVersion = 0;
+  let selectedSlot = null;
+  let slotData = null;
+  let slotPage = 0;
+  const slotPageSize = 10;
+  const formatDate = value => value.split('-').reverse().join('/');
+  function resetSlot() {
+    slotVersion++;
+    slotRequest?.abort();
+    selectedSlot = null;
+    slotData = null;
+    get('heat-inspector').setAttribute('aria-busy', 'false');
+    get('slot-title').textContent = 'Khám phá từng khung giờ';
+    get('slot-status').textContent = 'Bấm vào một ô có dữ liệu để xem những ngày đã góp vào giá trị trung bình.';
+    get('slot-results').hidden = true;
+    get('slot-retry').hidden = true;
+    get('slot-retry').disabled = true;
+  }
+  function renderSlotRows() {
+    const rows = [...slotData.records];
+    if (get('slot-sort').value === 'high') {
+      rows.sort((a, b) => b.rentals - a.rentals || a.date.localeCompare(b.date));
+    }
+    const start = slotPage * slotPageSize;
+    const body = get('slot-rows');
+    body.replaceChildren();
+    for (const row of rows.slice(start, start + slotPageSize)) {
+      const tr = body.insertRow();
+      tr.insertCell().textContent = formatDate(row.date);
+      const cell = tr.insertCell();
+      cell.textContent = fmt.format(row.rentals);
+      const bar = document.createElement('span');
+      bar.className = 'slot-bar';
+      bar.setAttribute('aria-hidden', 'true');
+      bar.style.width = (100 * row.rentals / (slotData.summary.maximum.rentals || 1)) + '%';
+      cell.append(bar);
+      tr.insertCell().textContent = fmt.format(row.casual);
+      tr.insertCell().textContent = fmt.format(row.registered);
+    }
+    get('slot-page').textContent = (start + 1) + '–' + Math.min(start + slotPageSize, rows.length) + ' / ' + rows.length + ' ngày';
+    get('slot-prev').disabled = slotPage === 0;
+    get('slot-next').disabled = start + slotPageSize >= rows.length;
+  }
+  get('slot-sort').onchange = () => { slotPage = 0; renderSlotRows(); };
+  get('slot-prev').onclick = () => { slotPage--; renderSlotRows(); };
+  get('slot-next').onclick = () => { slotPage++; renderSlotRows(); };
+
+  async function openSlot(cell) {
+    if (!applied) return;
+    selectedSlot = cell;
+    slotRequest?.abort();
+    const version = ++slotVersion;
+    const controller = new AbortController();
+    slotRequest = controller;
+    get('heat-inspector').setAttribute('aria-busy', 'true');
+    get('slot-title').textContent = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ nhật'][cell.day] + ' · ' + cell.hour + ':00–' + (cell.hour + 1) + ':00';
+    get('slot-status').textContent = 'Đang đọc các ngày của khung giờ này…';
+    get('slot-results').hidden = true;
+    get('slot-retry').hidden = true;
+    get('slot-retry').disabled = true;
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    try {
+      const params = new URLSearchParams({...applied, weekday:cell.day, hour:cell.hour});
+      const response = await fetch('/api/history/slot?' + params, {signal:controller.signal});
+      const result = await response.json();
+      if (version !== slotVersion) return;
+      if (!response.ok) throw new Error(result.error || 'Không đọc được chi tiết.');
+      if (!result.summary) {
+        get('slot-status').textContent = 'Không có bản ghi cho khung giờ này trong bộ lọc đã chọn.';
+        return;
+      }
+      slotData = result;
+      const summary = result.summary;
+      get('slot-status').textContent = 'Đã tổng hợp ' + summary.samples + ' ngày có bản ghi.' +
+        (result.missing_days ? ' Có ' + result.missing_days + ' ngày cùng thứ thiếu bản ghi giờ này; trung bình chỉ tính các bản ghi hiện có.' : '');
+      const kind = {'all':'Tất cả loại ngày', '1':'Ngày làm việc', '0':'Ngày nghỉ / ngày lễ'};
+      get('slot-scope').textContent = formatDate(result.filters.start) + ' – ' + formatDate(result.filters.end) + ' · ' + kind[result.filters.workingday];
+      get('slot-samples').textContent = fmt.format(summary.samples);
+      get('slot-mean').textContent = fmt.format(summary.mean) + ' lượt/giờ';
+      get('slot-median').textContent = fmt.format(summary.median) + ' lượt/giờ';
+      get('slot-range').textContent = 'Cao nhất ' + fmt.format(summary.maximum.rentals) + ' lượt (' + formatDate(summary.maximum.date) + '), thấp nhất ' + fmt.format(summary.minimum.rentals) + ' lượt (' + formatDate(summary.minimum.date) + ').';
+      get('slot-spread').textContent = summary.samples === 1
+        ? 'Khung giờ này chỉ có một ngày để quan sát.'
+        : 'Khi sắp các ngày theo lượt thuê, mốc 25% là ' + fmt.format(summary.q25) + ' và mốc 75% là ' + fmt.format(summary.q75) + ' lượt/giờ. Hai mốc cho thấy khoảng trung tâm của dữ liệu; trung vị là giá trị ở giữa. Nếu cùng đạt cực trị, ngày sớm nhất được ghi ở trên.';
+      get('slot-caption').textContent = 'Tổng ' + fmt.format(summary.total) + ' lượt thuê của ' + summary.samples + ' bản ghi giờ đã chọn';
+      get('slot-sort').value = 'date';
+      slotPage = 0;
+      renderSlotRows();
+      get('slot-results').hidden = false;
+    } catch (error) {
+      if (version !== slotVersion) return;
+      get('slot-status').textContent = error.name === 'AbortError' ? 'Đọc chi tiết quá lâu. Hãy thử lại.' : 'Chưa tải được chi tiết. ' + error.message;
+      get('slot-retry').hidden = false;
+      get('slot-retry').disabled = false;
+    } finally {
+      clearTimeout(timeout);
+      if (version === slotVersion) get('heat-inspector').setAttribute('aria-busy', 'false');
+    }
+  }
+  get('slot-retry').onclick = () => openSlot(selectedSlot);
   function renderHeatmap(cells) {
     const grid = get('heat-grid');
     const days = [
@@ -266,13 +367,14 @@
         const blend = (position - left) * 100;
         btn.style.backgroundColor = `color-mix(in srgb, var(--heat-${left}), var(--heat-${left + 1}) ${blend}%)`;
         if (c.mean === peak.mean) btn.classList.add('heat-high');
-        btn.setAttribute('aria-pressed', String(c === peak));
+        btn.setAttribute('aria-pressed', 'false');
         btn.onclick = () => {
           grid
             .querySelector('[aria-pressed="true"]')
             ?.setAttribute('aria-pressed', 'false');
           btn.setAttribute('aria-pressed', 'true');
           get('heat-detail').textContent = btn.title;
+          openSlot(c);
         };
         td.append(btn);
       }
@@ -281,6 +383,7 @@
   function invalidate() {
     revision++;
     resetComparison();
+    resetSlot();
     get('history-results').hidden = true;
     get('history-status').textContent =
       'Bộ lọc đã thay đổi. Bấm Xem dữ liệu để cập nhật.';
@@ -288,9 +391,13 @@
   form.addEventListener('input', invalidate);
   form.addEventListener('change', invalidate);
   async function load(event) {
-    if (event) event.preventDefault();
+    if (event) {
+      event.preventDefault();
+      if (!validateForm(form)) return;
+    }
     const current = ++revision;
     resetComparison();
+    resetSlot();
     const params = new URLSearchParams(new FormData(form));
     get('history-results').hidden = true;
     get('history-status').textContent = 'Đang đọc dữ liệu lịch sử…';
@@ -413,7 +520,7 @@
       });
       get('history-chart').replaceChildren(svg);
       renderHeatmap(result.heatmap);
-      applied = { start: result.filters.start, end: result.filters.end };
+      applied = result.filters;
       get('history-results').hidden = false;
     } catch (error) {
       if (current === revision)

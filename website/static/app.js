@@ -1,12 +1,12 @@
 // One tooltip for the charts. Convert the pointer to SVG units before finding the nearest hour.
-const chartTip = document.createElement('div');
-chartTip.className = 'chart-tooltip';
+const chartTip = document.createElement("div");
+chartTip.className = "chart-tooltip";
 chartTip.hidden = true;
 document.body.append(chartTip);
 let activeGuide;
 function hideChartTip() {
   chartTip.hidden = true;
-  if (activeGuide) activeGuide.setAttribute('visibility', 'hidden');
+  if (activeGuide) activeGuide.setAttribute("visibility", "hidden");
 }
 function showChartTip(event, text) {
   chartTip.textContent = text;
@@ -17,34 +17,34 @@ function showChartTip(event, text) {
     event.clientX + w + 18 < innerWidth
       ? event.clientX + 14
       : event.clientX - w - 14;
-  chartTip.style.left = Math.max(6, left) + 'px';
+  chartTip.style.left = Math.max(6, left) + "px";
   chartTip.style.top =
-    Math.max(6, Math.min(innerHeight - h - 6, event.clientY + 12)) + 'px';
+    Math.max(6, Math.min(innerHeight - h - 6, event.clientY + 12)) + "px";
 }
-window.addEventListener('scroll', hideChartTip, true);
-window.addEventListener('hashchange', hideChartTip);
-window.addEventListener('resize', hideChartTip);
+window.addEventListener("scroll", hideChartTip, true);
+window.addEventListener("hashchange", hideChartTip);
+window.addEventListener("resize", hideChartTip);
 function enableHourlyHover(svg, x, top, bottom, describe) {
-  const guide = document.createElementNS(svg.namespaceURI, 'line');
+  const guide = document.createElementNS(svg.namespaceURI, "line");
   for (const [k, v] of Object.entries({
     y1: top,
     y2: bottom,
-    class: 'chart-guide',
-    visibility: 'hidden'
+    class: "chart-guide",
+    visibility: "hidden",
   }))
     guide.setAttribute(k, v);
   svg.append(guide);
   // SVG hit testing only selects the painted data curves and their points.
-  for (const curve of svg.querySelectorAll('path, polyline')) {
-    curve.style.pointerEvents = 'stroke';
+  for (const curve of svg.querySelectorAll("path, polyline")) {
+    curve.style.pointerEvents = "stroke";
   }
-  for (const title of svg.querySelectorAll('circle title')) title.remove();
+  for (const title of svg.querySelectorAll("circle title")) title.remove();
   function inspect(event) {
-    if (!event.target.matches('path, polyline, circle')) return hideChartTip();
+    if (!event.target.matches("path, polyline, circle")) return hideChartTip();
     const matrix = svg.getScreenCTM();
     if (!matrix) return;
     const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(
-      matrix.inverse()
+      matrix.inverse(),
     );
     if (
       point.x < x(0) - 5 ||
@@ -55,16 +55,16 @@ function enableHourlyHover(svg, x, top, bottom, describe) {
       return hideChartTip();
     const hour = Math.max(
       0,
-      Math.min(23, Math.round((point.x - x(0)) / (x(1) - x(0))))
+      Math.min(23, Math.round((point.x - x(0)) / (x(1) - x(0)))),
     );
     if (guide !== activeGuide) hideChartTip();
     activeGuide = guide;
-    guide.setAttribute('x1', x(hour));
-    guide.setAttribute('x2', x(hour));
-    guide.setAttribute('visibility', 'visible');
+    guide.setAttribute("x1", x(hour));
+    guide.setAttribute("x2", x(hour));
+    guide.setAttribute("visibility", "visible");
     showChartTip(
       event,
-      String(hour).padStart(2, '0') + ':00' + '\n' + describe(hour)
+      String(hour).padStart(2, "0") + ":00" + "\n" + describe(hour),
     );
   }
   svg.onpointermove = inspect;
@@ -72,60 +72,100 @@ function enableHourlyHover(svg, x, top, bottom, describe) {
   svg.onpointerleave = hideChartTip;
   svg.onpointercancel = hideChartTip;
 }
+// Shared inline validation for the two user-input forms.
+function validateForm(form) {
+  let firstInvalid = null;
+  for (const field of form.querySelectorAll("input, select")) {
+    const errorId = form.id + "-" + (field.id || field.name) + "-error";
+    let error = document.getElementById(errorId);
+    if (!error) {
+      error = document.createElement("span");
+      error.id = errorId;
+      error.className = "field-error";
+      field.closest("label").append(error);
+      field.setAttribute(
+        "aria-describedby",
+        [field.getAttribute("aria-describedby"), errorId]
+          .filter(Boolean)
+          .join(" "),
+      );
+      field.addEventListener("input", () => {
+        error.textContent = "";
+        field.removeAttribute("aria-invalid");
+      });
+    }
+    let message = "";
+    if (!field.validity.valid) {
+      message = field.validity.valueMissing
+        ? "Vui lòng điền trường này."
+        : "Giá trị chưa hợp lệ. Hãy kiểm tra định dạng và giới hạn của trường.";
+      if (field.validity.rangeUnderflow || field.validity.rangeOverflow) {
+        message = "Chọn giá trị từ " + field.min + " đến " + field.max + ".";
+      }
+      if (!firstInvalid) firstInvalid = field;
+      field.setAttribute("aria-invalid", "true");
+    } else {
+      field.removeAttribute("aria-invalid");
+    }
+    error.textContent = message;
+  }
+  if (firstInvalid) firstInvalid.focus();
+  return !firstInvalid;
+}
 const $ = (id) => document.getElementById(id);
-const form = $('prediction-form');
-const button = $('predict-button');
+const form = $("prediction-form");
+const button = $("predict-button");
 let modelReady = false;
 let busy = false;
 let revision = 0;
 let hasResult = false;
-const numberFormat = new Intl.NumberFormat('vi-VN', {
-  maximumFractionDigits: 2
+const numberFormat = new Intl.NumberFormat("vi-VN", {
+  maximumFractionDigits: 2,
 });
 for (let hour = 0; hour < 24; hour++) {
   const option = new Option(
-    `${String(hour).padStart(2, '0')}:00 – ${String(hour + 1).padStart(2, '0')}:00`,
-    hour
+    `${String(hour).padStart(2, "0")}:00 – ${String(hour + 1).padStart(2, "0")}:00`,
+    hour,
   );
   option.selected = hour === 8;
-  $('hour').add(option);
+  $("hour").add(option);
 }
 
 function updateCalendar() {
-  const value = $('date').value;
+  const value = $("date").value;
   if (!value) {
-    $('calendar-info').textContent = 'Chọn ngày để xem thông tin lịch.';
+    $("calendar-info").textContent = "Chọn ngày để xem thông tin lịch.";
     return;
   }
   const date = new Date(`${value}T12:00:00`);
   if (Number.isNaN(date.getTime())) return;
   const md = value.slice(5);
   const season =
-    md >= '03-21' && md < '06-21'
-      ? 'Mùa xuân'
-      : md >= '06-21' && md < '09-23'
-        ? 'Mùa hè'
-        : md >= '09-23' && md < '12-21'
-          ? 'Mùa thu'
-          : 'Mùa đông';
+    md >= "03-21" && md < "06-21"
+      ? "Mùa xuân"
+      : md >= "06-21" && md < "09-23"
+        ? "Mùa hè"
+        : md >= "09-23" && md < "12-21"
+          ? "Mùa thu"
+          : "Mùa đông";
   const weekday = [
-    'Chủ nhật',
-    'Thứ Hai',
-    'Thứ Ba',
-    'Thứ Tư',
-    'Thứ Năm',
-    'Thứ Sáu',
-    'Thứ Bảy'
+    "Chủ nhật",
+    "Thứ Hai",
+    "Thứ Ba",
+    "Thứ Tư",
+    "Thứ Năm",
+    "Thứ Sáu",
+    "Thứ Bảy",
   ][date.getDay()];
   const working =
-    date.getDay() > 0 && date.getDay() < 6 && !$('holiday').checked;
-  $('calendar-info').textContent =
-    `${weekday} · ${season} · ${$('holiday').checked ? 'Ngày lễ' : working ? 'Ngày làm việc' : 'Cuối tuần'}`;
+    date.getDay() > 0 && date.getDay() < 6 && !$("holiday").checked;
+  $("calendar-info").textContent =
+    `${weekday} · ${season} · ${$("holiday").checked ? "Ngày lễ" : working ? "Ngày làm việc" : "Cuối tuần"}`;
 }
 
 function showError(message) {
-  $('form-error').textContent = message;
-  $('form-error').hidden = false;
+  $("form-error").textContent = message;
+  $("form-error").hidden = false;
 }
 
 function renderPeakHours(result) {
@@ -135,22 +175,30 @@ function renderPeakHours(result) {
     .slice(0, 3);
 
   const items = topHours.map((point) => {
-    const item = document.createElement('li');
-    const time = document.createElement('strong');
-    const count = document.createElement('span');
-    const start = String(point.hour).padStart(2, '0');
-    const end = String(point.hour + 1).padStart(2, '0');
+    const item = document.createElement("li");
+    const time = document.createElement("strong");
+    const count = document.createElement("span");
+    const start = String(point.hour).padStart(2, "0");
+    const end = String(point.hour + 1).padStart(2, "0");
     time.textContent = `${start}:00 – ${end}:00`;
     count.textContent = `${numberFormat.format(point.rounded_prediction)} lượt thuê`;
-    item.append(time, count);
+    // The bar compares the three displayed hours; it does not alter predictions.
+    const meter = document.createElement("span");
+    meter.className = "peak-meter";
+    meter.setAttribute("aria-hidden", "true");
+    const fill = document.createElement("i");
+    fill.style.width =
+      (100 * point.prediction) / (topHours[0].prediction || 1) + "%";
+    meter.append(fill);
+    item.append(time, count, meter);
     return item;
   });
 
-  $('peak-list').replaceChildren(...items);
-  $('peak-list').hidden = false;
-  $('peak-note').hidden = false;
-  const [year, month, day] = result.date.split('-');
-  $('peak-status').textContent =
+  $("peak-list").replaceChildren(...items);
+  $("peak-list").hidden = false;
+  $("peak-note").hidden = false;
+  const [year, month, day] = result.date.split("-");
+  $("peak-status").textContent =
     `Ngày ${day}/${month}/${year} · Xếp từ cao xuống thấp.`;
 }
 
@@ -164,17 +212,17 @@ function renderHourlyChart(result) {
     bottom = 48;
   const max = Math.max(
     5,
-    Math.ceil(Math.max(...points.map((p) => p.rounded_prediction)) / 5) * 5
+    Math.ceil(Math.max(...points.map((p) => p.rounded_prediction)) / 5) * 5,
   );
   const x = (hour) => left + (hour * (width - left - right)) / 23;
   const y = (value) =>
     height - bottom - (value * (height - top - bottom)) / max;
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-  svg.setAttribute('role', 'img');
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  svg.setAttribute("role", "img");
   svg.setAttribute(
-    'aria-label',
-    'Biểu đồ đường lượt thuê ước tính từ 00:00 đến 23:00. Số liệu chi tiết ở bảng bên dưới.'
+    "aria-label",
+    "Biểu đồ đường lượt thuê ước tính từ 00:00 đến 23:00. Số liệu chi tiết ở bảng bên dưới.",
   );
   const add = (tag, attributes, text) => {
     const element = document.createElementNS(svg.namespaceURI, tag);
@@ -184,54 +232,54 @@ function renderHourlyChart(result) {
     svg.append(element);
     return element;
   };
-  add('text', { x: left, y: 16, class: 'chart-label' }, 'Lượt thuê');
+  add("text", { x: left, y: 16, class: "chart-label" }, "Lượt thuê");
   for (let tick = 0; tick <= 5; tick++) {
     const value = (max * tick) / 5;
-    add('line', {
+    add("line", {
       x1: left,
       x2: width - right,
       y1: y(value),
       y2: y(value),
-      class: 'chart-grid'
+      class: "chart-grid",
     });
     add(
-      'text',
+      "text",
       {
         x: left - 8,
         y: y(value) + 4,
-        'text-anchor': 'end',
-        class: 'chart-label'
+        "text-anchor": "end",
+        class: "chart-label",
       },
-      numberFormat.format(value)
+      numberFormat.format(value),
     );
   }
   for (const hour of [0, 3, 6, 9, 12, 15, 18, 21, 23]) {
     add(
-      'text',
+      "text",
       {
         x: x(hour),
         y: height - 22,
-        'text-anchor': 'middle',
-        class: 'chart-label'
+        "text-anchor": "middle",
+        class: "chart-label",
       },
-      `${String(hour).padStart(2, '0')}:00`
+      `${String(hour).padStart(2, "0")}:00`,
     );
   }
-  add('polyline', {
+  add("polyline", {
     points: points
       .map((p) => `${x(p.hour)},${y(p.rounded_prediction)}`)
-      .join(' '),
-    class: 'chart-line'
+      .join(" "),
+    class: "chart-line",
   });
   for (const point of points) {
-    const dot = add('circle', {
+    const dot = add("circle", {
       cx: x(point.hour),
       cy: y(point.rounded_prediction),
       r: point.hour === result.hour ? 6 : 3.5,
-      class: point.hour === result.hour ? 'chart-dot selected' : 'chart-dot'
+      class: point.hour === result.hour ? "chart-dot selected" : "chart-dot",
     });
-    const title = document.createElementNS(svg.namespaceURI, 'title');
-    title.textContent = `${String(point.hour).padStart(2, '0')}:00: ${numberFormat.format(point.rounded_prediction)} lượt thuê`;
+    const title = document.createElementNS(svg.namespaceURI, "title");
+    title.textContent = `${String(point.hour).padStart(2, "0")}:00: ${numberFormat.format(point.rounded_prediction)} lượt thuê`;
     dot.append(title);
   }
   enableHourlyHover(
@@ -240,161 +288,161 @@ function renderHourlyChart(result) {
     top,
     height - bottom,
     (h) =>
-      'Dự đoán: ' +
+      "Dự đoán: " +
       numberFormat.format(points[h].rounded_prediction) +
-      ' lượt thuê'
+      " lượt thuê",
   );
-  $('hourly-chart').replaceChildren(svg);
-  $('hourly-chart').hidden = false;
-  $('hourly-details').hidden = false;
-  const [year, month, day] = result.date.split('-');
-  $('chart-status').textContent =
-    `${day}/${month}/${year} · Điểm nổi bật: ${String(result.hour).padStart(2, '0')}:00 · Di chuột trên biểu đồ để xem số lượt.`;
-  $('hourly-caption').textContent = `Ước tính ngày ${day}/${month}/${year}`;
-  $('hourly-rows').replaceChildren(
+  $("hourly-chart").replaceChildren(svg);
+  $("hourly-chart").hidden = false;
+  $("hourly-details").hidden = false;
+  const [year, month, day] = result.date.split("-");
+  $("chart-status").textContent =
+    `${day}/${month}/${year} · Điểm nổi bật: ${String(result.hour).padStart(2, "0")}:00 · Di chuột trên biểu đồ để xem số lượt.`;
+  $("hourly-caption").textContent = `Ước tính ngày ${day}/${month}/${year}`;
+  $("hourly-rows").replaceChildren(
     ...points.map((point) => {
-      const row = document.createElement('tr');
+      const row = document.createElement("tr");
       for (const value of [
-        `${String(point.hour).padStart(2, '0')}:00 – ${String(point.hour + 1).padStart(2, '0')}:00`,
-        numberFormat.format(point.rounded_prediction)
+        `${String(point.hour).padStart(2, "0")}:00 – ${String(point.hour + 1).padStart(2, "0")}:00`,
+        numberFormat.format(point.rounded_prediction),
       ]) {
-        const cell = document.createElement('td');
+        const cell = document.createElement("td");
         cell.textContent = value;
         row.append(cell);
       }
       return row;
-    })
+    }),
   );
 }
 
 async function loadModel() {
   try {
-    const response = await fetch('/api/model');
+    const response = await fetch("/api/model");
     const info = await response.json();
     if (!response.ok || !info.ready)
-      throw new Error(info.error || 'Chưa kết nối được mô hình.');
+      throw new Error(info.error || "Chưa kết nối được mô hình.");
     modelReady = true;
-    $('model-status').textContent = 'Mô hình đã sẵn sàng';
-    $('model-status').className = 'status ready';
-    if ($('active-model-name')) $('active-model-name').textContent = info.name;
-    if ($('evaluation-note')) {
-      $('evaluation-note').textContent = info.evaluation_note
-        ? 'Bản thử nghiệm: tập test lịch sử đã được xem trước đó; chưa kiểm chứng dự báo thực tế ở khu vực mới.'
-        : '';
-      $('evaluation-note').hidden = !info.evaluation_note;
+    $("model-status").textContent = "Mô hình đã sẵn sàng";
+    $("model-status").className = "status ready";
+    if ($("active-model-name")) $("active-model-name").textContent = info.name;
+    if ($("evaluation-note")) {
+      $("evaluation-note").textContent = info.evaluation_note
+        ? "Bản thử nghiệm: tập test lịch sử đã được xem trước đó; chưa kiểm chứng dự báo thực tế ở khu vực mới."
+        : "";
+      $("evaluation-note").hidden = !info.evaluation_note;
     }
     for (const [id, key] of [
-      ['r2-value', 'R2'],
-      ['mae-value', 'MAE'],
-      ['rmse-value', 'RMSE']
+      ["r2-value", "R2"],
+      ["mae-value", "MAE"],
+      ["rmse-value", "RMSE"],
     ]) {
       $(id).textContent =
-        typeof info.test[key] === 'number'
+        typeof info.test[key] === "number"
           ? numberFormat.format(info.test[key])
-          : '—';
+          : "—";
     }
     button.disabled = false;
   } catch (error) {
-    $('model-status').textContent = 'Chưa kết nối mô hình';
-    $('model-status').className = 'status error';
+    $("model-status").textContent = "Chưa kết nối mô hình";
+    $("model-status").className = "status error";
     showError(
-      error.message || 'Không kết nối được máy chủ. Vui lòng tải lại trang.'
+      error.message || "Không kết nối được máy chủ. Vui lòng tải lại trang.",
     );
   }
 }
 
-form.addEventListener('input', () => {
+form.addEventListener("input", () => {
   revision++;
   updateCalendar();
   if (hasResult) {
-    $('result-state').textContent = 'Cần tính lại';
-    $('chart-status').textContent =
-      'Đầu vào đã thay đổi. Chọn “Tính dự đoán” để cập nhật biểu đồ.';
-    $('peak-status').textContent =
-      'Đầu vào đã thay đổi. Chọn “Tính dự đoán” để cập nhật giờ cao điểm.';
-    $('peak-list').hidden = true;
-    $('peak-note').hidden = true;
+    $("result-state").textContent = "Cần tính lại";
+    $("chart-status").textContent =
+      "Đầu vào đã thay đổi. Chọn “Tính dự đoán” để cập nhật biểu đồ.";
+    $("peak-status").textContent =
+      "Đầu vào đã thay đổi. Chọn “Tính dự đoán” để cập nhật giờ cao điểm.";
+    $("peak-list").hidden = true;
+    $("peak-note").hidden = true;
   }
 });
 
-form.addEventListener('submit', async (event) => {
+form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (!modelReady || busy || !form.reportValidity()) return;
+  if (!modelReady || busy || !validateForm(form)) return;
   busy = true;
   button.disabled = true;
-  button.textContent = 'Đang tính dự đoán…';
-  $('form-error').hidden = true;
-  $('peak-status').textContent = 'Đang tính giờ cao điểm…';
-  $('peak-list').hidden = true;
-  $('peak-note').hidden = true;
+  button.textContent = "Đang tính dự đoán…";
+  $("form-error").hidden = true;
+  $("peak-status").textContent = "Đang tính giờ cao điểm…";
+  $("peak-list").hidden = true;
+  $("peak-note").hidden = true;
   const startedAt = revision;
   const payload = {
-    date: $('date').value,
-    hour: Number($('hour').value),
-    weather: Number($('weather').value),
-    holiday: $('holiday').checked
+    date: $("date").value,
+    hour: Number($("hour").value),
+    weather: Number($("weather").value),
+    holiday: $("holiday").checked,
   };
-  for (const field of ['temperature', 'feels_like', 'humidity', 'wind_speed'])
+  for (const field of ["temperature", "feels_like", "humidity", "wind_speed"])
     payload[field] =
-      $(field).value.trim() === '' ? null : Number($(field).value);
-  const weatherText = $('weather').selectedOptions[0].textContent;
+      $(field).value.trim() === "" ? null : Number($(field).value);
+  const weatherText = $("weather").selectedOptions[0].textContent;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30000);
   try {
-    const response = await fetch('/api/predict', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const response = await fetch("/api/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-      signal: controller.signal
+      signal: controller.signal,
     });
     const result = await response.json();
-    if (!response.ok) throw new Error(result.error || 'Không thể dự đoán.');
+    if (!response.ok) throw new Error(result.error || "Không thể dự đoán.");
     // Never label an old response as a result for newly changed inputs.
     if (startedAt !== revision) {
-      $('result-state').textContent = 'Cần tính lại';
-      $('peak-status').textContent =
-        'Đầu vào đã thay đổi. Chọn “Tính dự đoán” để cập nhật giờ cao điểm.';
+      $("result-state").textContent = "Cần tính lại";
+      $("peak-status").textContent =
+        "Đầu vào đã thay đổi. Chọn “Tính dự đoán” để cập nhật giờ cao điểm.";
       return;
     }
-    $('prediction-value').textContent = new Intl.NumberFormat('vi-VN').format(
-      result.rounded_prediction
+    $("prediction-value").textContent = new Intl.NumberFormat("vi-VN").format(
+      result.rounded_prediction,
     );
-    $('prediction-caption').textContent =
-      'Ước tính từ mô hình đã huấn luyện, được làm tròn đến một lượt thuê.';
-    $('result-state').textContent = 'Đã dự đoán';
-    const [year, month, day] = result.date.split('-');
-    $('result-time').textContent =
-      `${String(result.hour).padStart(2, '0')}:00 · ${day}/${month}/${year}`;
-    $('result-weather').textContent = weatherText;
+    $("prediction-caption").textContent =
+      "Ước tính từ mô hình đã huấn luyện, được làm tròn đến một lượt thuê.";
+    $("result-state").textContent = "Đã dự đoán";
+    const [year, month, day] = result.date.split("-");
+    $("result-time").textContent =
+      `${String(result.hour).padStart(2, "0")}:00 · ${day}/${month}/${year}`;
+    $("result-weather").textContent = weatherText;
     const labels = {
-      temp: 'nhiệt độ',
-      atemp: 'nhiệt độ cảm nhận',
-      hum: 'độ ẩm',
-      windspeed: 'tốc độ gió'
+      temp: "nhiệt độ",
+      atemp: "nhiệt độ cảm nhận",
+      hum: "độ ẩm",
+      windspeed: "tốc độ gió",
     };
-    $('imputation-note').textContent = result.imputed_features.length
-      ? `Đã điền giá trị thiếu cho: ${result.imputed_features.map((f) => labels[f] || f).join(', ')}.`
-      : '';
-    $('imputation-note').hidden = result.imputed_features.length === 0;
+    $("imputation-note").textContent = result.imputed_features.length
+      ? `Đã điền giá trị thiếu cho: ${result.imputed_features.map((f) => labels[f] || f).join(", ")}.`
+      : "";
+    $("imputation-note").hidden = result.imputed_features.length === 0;
     renderHourlyChart(result);
     renderPeakHours(result);
     hasResult = true;
   } catch (error) {
     showError(
-      error.name === 'AbortError'
-        ? 'Yêu cầu mất quá nhiều thời gian. Vui lòng thử lại.'
-        : error.message
+      error.name === "AbortError"
+        ? "Yêu cầu mất quá nhiều thời gian. Vui lòng thử lại."
+        : error.message,
     );
-    $('peak-status').textContent =
-      'Chưa cập nhật được giờ cao điểm. Vui lòng tính dự đoán lại.';
-    $('result-state').textContent = hasResult
-      ? 'Kết quả trước đó'
-      : 'Chưa dự đoán';
+    $("peak-status").textContent =
+      "Chưa cập nhật được giờ cao điểm. Vui lòng tính dự đoán lại.";
+    $("result-state").textContent = hasResult
+      ? "Kết quả trước đó"
+      : "Chưa dự đoán";
   } finally {
     clearTimeout(timeout);
     busy = false;
     button.disabled = !modelReady;
-    button.textContent = 'Tính dự đoán';
+    button.textContent = "Tính dự đoán";
   }
 });
 updateCalendar();

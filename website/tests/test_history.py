@@ -86,3 +86,80 @@ class HistoryTests(unittest.TestCase):
             )
             self.assertEqual(actual['actual'], row.cnt)
             self.assertAlmostEqual(actual['prediction'], row.original_refit_85)
+
+
+    def test_slot_records_and_summary_match_filtered_heatmap(self):
+        dates = pd.to_datetime(self.data.dteday)
+        for start, end, kind, weekday, hour in [
+            ('2011-01-01', '2012-12-31', 'all', 1, 17),
+            ('2012-05-01', '2012-05-31', '1', 1, 17),
+            ('2012-12-31', '2012-12-31', 'all', 0, 8),
+        ]:
+            with self.subTest(kind=kind, start=start):
+                filters = dict(start=start, end=end, workingday=kind)
+                expected = self.data.loc[
+                    self.data.dteday.between(start, end)
+                    & dates.dt.dayofweek.eq(weekday) & self.data.hr.eq(hour)
+                ].sort_values('dteday')
+                if kind != 'all':
+                    expected = expected.loc[expected.workingday.eq(int(kind))]
+                response = self.client.get('/api/history/slot',
+                    query_string={**filters, 'weekday':weekday, 'hour':hour})
+                self.assertEqual(response.status_code, 200)
+                result = response.json
+                self.assertEqual(result['filters'], filters)
+                self.assertEqual([r['date'] for r in result['records']], expected.dteday.tolist())
+                self.assertEqual([r['rentals'] for r in result['records']], expected.cnt.tolist())
+                self.assertTrue(all(r['rentals']==r['casual']+r['registered'] for r in result['records']))
+                summary = result['summary']
+                self.assertEqual(summary['samples'], len(expected))
+                self.assertEqual(summary['total'], int(expected.cnt.sum()))
+                self.assertAlmostEqual(summary['mean'], expected.cnt.mean())
+                self.assertAlmostEqual(summary['median'], expected.cnt.median())
+                self.assertAlmostEqual(summary['q25'], expected.cnt.quantile(.25))
+                self.assertAlmostEqual(summary['q75'], expected.cnt.quantile(.75))
+                for label, value in [('minimum', expected.cnt.min()), ('maximum',expected.cnt.max())]:
+                    self.assertEqual(summary[label]['rentals'], value)
+                    self.assertEqual(summary[label]['date'], expected.loc[expected.cnt.eq(value)].dteday.iloc[0])
+                heatmap = self.client.get('/api/history', query_string=filters).json['heatmap']
+                cell = next(c for c in heatmap if c['day']==weekday and c['hour']==hour)
+                self.assertAlmostEqual(summary['mean'], cell['mean'])
+                self.assertEqual(summary['samples'],cell['samples'])
+
+    def test_slot_missing_hour_does_not_become_zero(self):
+        for day, rows in self.data.groupby('dteday'):
+            missing = set(range(24)) - set(rows.hr)
+            if missing:
+                hour = min(missing)
+                weekday = pd.Timestamp(day).dayofweek
+                result = self.client.get('/api/history/slot', query_string=dict(
+                    start=day, end=day, weekday=weekday, hour=hour)).json
+                self.assertEqual(result['records'], [])
+                self.assertIsNone(result['summary'])
+                self.assertEqual(result['missing_days'],1)
+                break
+        else:
+            self.fail('Expected at least one missing hour in the source dataset')
+
+    def test_slot_empty_and_invalid_requests(self):
+        response = self.client.get('/api/history/slot', query_string=dict(
+            start='2011-01-01', end='2011-01-01', workingday='1', weekday=5, hour=8))
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.json['records'],[])
+        self.assertIsNone(response.json['summary'])
+        for args in [{}, {'weekday':'1'}, {'weekday':'1','hour':'17.5'},
+                     {'weekday':'bad','hour':'8'}, {'weekday':7,'hour':8},
+                     {'weekday':1,'hour':24}, {'weekday':1,'hour':-1},
+                     {'weekday':1,'hour':8,'start':'2012-02-30'},
+                     {'weekday':1,'hour':8,'workingday':'3'}]:
+            with self.subTest(args=args):
+                self.assertEqual(self.client.get('/api/history/slot',query_string=args).status_code,400)
+
+
+    def test_slot_when_history_source_is_unavailable(self):
+        from unittest.mock import patch
+        app = Flask(__name__)
+        with patch('history.pd.read_csv', side_effect=OSError('missing source')):
+            with self.assertLogs(app.logger, level='ERROR'):
+                register_history(app)
+        self.assertEqual(app.test_client().get('/api/history/slot?weekday=1&hour=17').status_code,503)

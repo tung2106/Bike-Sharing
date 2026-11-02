@@ -4,6 +4,7 @@ from datetime import date
 from pathlib import Path
 import pandas as pd
 from flask import jsonify, request
+from evaluation import evaluation_report, hours_by_day, read_test_hours
 
 
 def register_history(app):
@@ -26,30 +27,34 @@ def register_history(app):
         app.logger.exception('Historical CSV unavailable')
         data = None
 
-    @app.get('/api/history')
-    def history():
-        if data is None:
-            return jsonify(error='Không đọc được dữ liệu lịch sử hour.csv.'), 503
+    def select_history():
         start, end = request.args.get('start', lower), request.args.get('end', upper)
         kind = request.args.get('workingday', 'all')
         try:
             if (
                 date.fromisoformat(start).isoformat() != start
                 or date.fromisoformat(end).isoformat() != end
+                or not lower <= start <= end <= upper
+                or kind not in ('all', '0', '1')
             ):
                 raise ValueError()
-            if not lower <= start <= end <= upper or kind not in ('all', '0', '1'):
-                raise ValueError()
         except ValueError:
-            return (
-                jsonify(
-                    error=f'Chọn khoảng ngày hợp lệ từ {lower} đến {upper} và loại ngày hợp lệ.'
-                ),
-                400,
-            )
+            raise ValueError(
+                f'Chọn khoảng ngày hợp lệ từ {lower} đến {upper} và loại ngày hợp lệ.'
+            ) from None
         selected = data.loc[data.dteday.between(start, end)]
         if kind != 'all':
             selected = selected.loc[selected.workingday.eq(int(kind))]
+        return selected, dict(start=start, end=end, workingday=kind)
+
+    @app.get('/api/history')
+    def history():
+        if data is None:
+            return jsonify(error='Không đọc được dữ liệu lịch sử hour.csv.'), 503
+        try:
+            selected, filters = select_history()
+        except ValueError as error:
+            return jsonify(error=str(error)), 400
         # A missing hour is unknown, never a zero-rental observation.
         grouped = selected.groupby('hr')['cnt'].agg(['mean', 'count'])
         hourly = [
@@ -73,7 +78,7 @@ def register_history(app):
         return jsonify(
             heatmap=heatmap,
             bounds=dict(start=lower, end=upper),
-            filters=dict(start=start, end=end, workingday=kind),
+            filters=filters,
             rows=len(selected),
             days=int(selected.dteday.nunique()),
             total=int(selected.cnt.sum()),
@@ -84,35 +89,58 @@ def register_history(app):
             hourly=hourly,
         )
 
+    @app.get('/api/history/slot')
+    def history_slot():
+        if data is None:
+            return jsonify(error='Không đọc được dữ liệu lịch sử hour.csv.'), 503
+        try:
+            selected, filters = select_history()
+            weekday = int(request.args.get('weekday', ''))
+            hour = int(request.args.get('hour', ''))
+            if not 0 <= weekday <= 6 or not 0 <= hour <= 23:
+                raise ValueError('Chọn thứ từ 0 đến 6 và giờ từ 0 đến 23.')
+        except ValueError as error:
+            return jsonify(error='Bộ lọc chi tiết không hợp lệ. ' + str(error)), 400
+
+        # The weekday uses Monday=0, as in the heatmap.
+        days = selected.loc[selected.weekday.eq(weekday)]
+        observations = days.loc[days.hr.eq(hour)].sort_values('dteday')
+        records = [
+            dict(date=row.dteday, rentals=int(row.cnt),
+                 casual=int(row.casual), registered=int(row.registered))
+            for row in observations.itertuples()
+        ]
+        summary = None
+        if records:
+            counts = observations.cnt
+            summary = dict(
+                samples=len(records), total=int(counts.sum()),
+                mean=float(counts.mean()), median=float(counts.median()),
+                q25=float(counts.quantile(0.25)), q75=float(counts.quantile(0.75)),
+                minimum=min(records, key=lambda row: row['rentals']),
+                maximum=max(records, key=lambda row: row['rentals']),
+            )
+        return jsonify(
+            filters=filters, weekday=weekday, hour=hour, records=records,
+            summary=summary, missing_days=int(days.dteday.nunique()) - len(records),
+        )
+
     @app.get('/api/history/rf-test')
     def rf_test():
-        predictions = (
-            source.parents[2]
-            / 'experiments/hourly_comparison/runs/20261025_024202/test_predictions.csv'
-        )
         try:
-            rows = pd.read_csv(
-                predictions, usecols=['timestamp', 'cnt', 'original_refit_85']
-            )
-            times = pd.to_datetime(rows['timestamp'])
-            if rows.empty or rows.isna().any().any() or times.duplicated().any():
-                raise ValueError('Invalid test predictions')
-            days = {}
-            for stamp, actual, prediction in zip(
-                times, rows['cnt'], rows['original_refit_85']
-            ):
-                key = stamp.date().isoformat()
-                days.setdefault(key, []).append(
-                    dict(
-                        hour=stamp.hour,
-                        actual=int(actual),
-                        prediction=float(prediction),
-                    )
-                )
-            return jsonify(days=days)
+            rows = read_test_hours({'original_refit_85': 'prediction'})
+            return jsonify(days=hours_by_day(rows))
         except (OSError, ValueError):
             app.logger.exception('RF test predictions unavailable')
             return (
                 jsonify(error='Không đọc được kết quả kiểm tra của Random Forest.'),
                 503,
             )
+
+    @app.get('/api/evaluation')
+    def evaluation():
+        try:
+            return jsonify(evaluation_report())
+        except (OSError, ValueError):
+            app.logger.exception('Saved evaluation data unavailable')
+            return jsonify(error='Chưa đọc được các dự đoán đã lưu của thí nghiệm.'), 503
