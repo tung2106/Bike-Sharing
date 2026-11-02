@@ -16,12 +16,15 @@ MODELS = (
     ('rf85', 'original_refit_85', 'Random Forest 85%', 'RF 85%'),
     ('hgb85', 'selected_refit_85', 'HistGradientBoosting 85%', 'HGB 85%'),
 )
+PREVIOUS_DAY_MODEL = (
+    'rf85_previous_day', 'rf85_previous_day', 'RF 85% + lượt ngày trước', 'RF 85% + ngày',
+)
 
 
-def read_test_hours(prediction_columns):
+def read_test_hours(prediction_columns, archive=None):
     """Ghép dự đoán gốc với lượt thuê thực tế của cùng giờ."""
     rows = pd.read_csv(
-        TEST_CSV,
+        TEST_CSV if archive is None else archive,
         usecols=['timestamp', 'cnt', *prediction_columns],
         dtype={'cnt': 'int64', **{column: float for column in prediction_columns}},
     )
@@ -47,15 +50,16 @@ def hours_by_day(rows):
     }
 
 
-def evaluation_report():
-    rows = read_test_hours({column: key for key, column, _, _ in MODELS})
+def evaluation_report(previous_day_archive=None):
+    compared = MODELS if previous_day_archive is None else (*MODELS, PREVIOUS_DAY_MODEL)
+    rows = read_test_hours({column: key for key, column, _, _ in compared}, previous_day_archive)
     actual = rows['actual']
     count = len(rows)
     actual_mean = float(actual.mean())
     baseline_squares = float(((actual - actual_mean) ** 2).sum())
 
     models = []
-    for key, _, label, short_label in MODELS:
+    for key, _, label, short_label in compared:
         error = rows[key] - actual
         absolute_sum = float(error.abs().sum())
         squared_sum = float((error ** 2).sum())
@@ -68,6 +72,7 @@ def evaluation_report():
         })
 
     return {
+        'default_model': 'rf85' if previous_day_archive is None else PREVIOUS_DAY_MODEL[0],
         'count': count,
         'first': rows.index[0].isoformat(timespec='minutes'),
         'last': rows.index[-1].isoformat(timespec='minutes'),

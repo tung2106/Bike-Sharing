@@ -322,7 +322,9 @@ async function loadModel() {
     if (!response.ok || !info.ready)
       throw new Error(info.error || "Chưa kết nối được mô hình.");
     modelReady = true;
-    $("model-status").textContent = "Mô hình đã sẵn sàng";
+    $("model-status").textContent = info.uses_previous_day
+      ? "RF 85% · có lượt ngày trước"
+      : "Mô hình đã sẵn sàng";
     $("model-status").className = "status ready";
     if ($("active-model-name")) $("active-model-name").textContent = info.name;
     if ($("evaluation-note")) {
@@ -419,11 +421,19 @@ form.addEventListener("submit", async (event) => {
       atemp: "nhiệt độ cảm nhận",
       hum: "độ ẩm",
       windspeed: "tốc độ gió",
+      previous_day_rentals: "tổng lượt ngày trước",
     };
-    $("imputation-note").textContent = result.imputed_features.length
-      ? `Đã điền giá trị thiếu cho: ${result.imputed_features.map((f) => labels[f] || f).join(", ")}.`
-      : "";
-    $("imputation-note").hidden = result.imputed_features.length === 0;
+    const notes = [];
+    if (Number.isFinite(result.features?.previous_day_rentals))
+      notes.push(
+        `Ngày trước có ${numberFormat.format(result.features.previous_day_rentals)} lượt thuê.`,
+      );
+    if (result.imputed_features.length)
+      notes.push(
+        `Đã điền giá trị thiếu cho: ${result.imputed_features.map((f) => labels[f] || f).join(", ")}.`,
+      );
+    $("imputation-note").textContent = notes.join(" ");
+    $("imputation-note").hidden = notes.length === 0;
     renderHourlyChart(result);
     renderPeakHours(result);
     hasResult = true;

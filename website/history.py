@@ -4,10 +4,10 @@ from datetime import date
 from pathlib import Path
 import pandas as pd
 from flask import jsonify, request
-from evaluation import evaluation_report, hours_by_day, read_test_hours
+from evaluation import PREVIOUS_DAY_MODEL, evaluation_report, hours_by_day, read_test_hours
 
 
-def register_history(app):
+def register_history(app, previous_day_archive=None):
     source = Path(__file__).resolve().parents[1] / 'data/raw/hour.csv'
     try:
         data = pd.read_csv(
@@ -128,7 +128,8 @@ def register_history(app):
     @app.get('/api/history/rf-test')
     def rf_test():
         try:
-            rows = read_test_hours({'original_refit_85': 'prediction'})
+            column = 'original_refit_85' if previous_day_archive is None else PREVIOUS_DAY_MODEL[1]
+            rows = read_test_hours({column: 'prediction'}, previous_day_archive)
             return jsonify(days=hours_by_day(rows))
         except (OSError, ValueError):
             app.logger.exception('RF test predictions unavailable')
@@ -140,7 +141,7 @@ def register_history(app):
     @app.get('/api/evaluation')
     def evaluation():
         try:
-            return jsonify(evaluation_report())
+            return jsonify(evaluation_report(previous_day_archive))
         except (OSError, ValueError):
             app.logger.exception('Saved evaluation data unavailable')
             return jsonify(error='Chưa đọc được các dự đoán đã lưu của thí nghiệm.'), 503

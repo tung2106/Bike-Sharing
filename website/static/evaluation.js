@@ -263,8 +263,9 @@
       modelPicker.replaceChildren(
         ...data.models.map((m) => new Option(m.label, m.key)),
       );
-      modelPicker.value = data.models.some((m) => m.key === "rf85")
-        ? "rf85"
+      const active = data.default_model || "rf85";
+      modelPicker.value = data.models.some((m) => m.key === active)
+        ? active
         : data.models[0].key;
       datePicker.replaceChildren(
         ...days.map((day) => new Option(dateLabel(day), day)),

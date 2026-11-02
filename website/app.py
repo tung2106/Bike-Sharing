@@ -16,6 +16,7 @@ import sklearn
 from flask import Flask, jsonify, render_template, request
 from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.ensemble import RandomForestRegressor
+from daily_context import PREVIOUS_DAY, daily_totals, previous_day_rentals
 
 ROOT = Path(__file__).resolve().parent
 FEATURES = [
@@ -116,7 +117,10 @@ def load_model(model_path):
         raise RuntimeError(
             'File được chọn không phải mô hình hour đã xuất từ notebook.'
         )
-    if bundle.get('features') != FEATURES or bundle.get('target') != 'cnt':
+    if (
+        bundle.get('features') not in (FEATURES, [*FEATURES, PREVIOUS_DAY])
+        or bundle.get('target') != 'cnt'
+    ):
         raise RuntimeError('Các cột của mô hình không khớp dữ liệu theo giờ.')
     trained = bundle.get('versions', {}).get('scikit-learn')
     if trained and trained != sklearn.__version__:
@@ -136,19 +140,25 @@ def create_app(model_path=None):
     app = Flask(__name__)
     from history import register_history
 
-    register_history(app)
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024
     path = Path(
         model_path
         or os.environ.get('BIKE_MODEL_PATH', ROOT / 'models' / 'model.joblib')
     )
     bundle, load_error = None, None
+    totals = None
+    previous_day_archive = None
     try:
         bundle = load_model(path)
+        if PREVIOUS_DAY in bundle['features']:
+            totals = daily_totals()
+            previous_day_archive = path.with_name('test_predictions.csv')
     except Exception:
         logging.exception('Không tải được mô hình')
+        bundle = None
         load_error = 'Chưa tải được mô hình. Kiểm tra file hour/model.joblib và phiên bản thư viện theo hướng dẫn cài đặt.'
     app.config['MODEL_BUNDLE'] = bundle
+    register_history(app, previous_day_archive=previous_day_archive)
 
     @app.after_request
     def headers(response):
@@ -171,6 +181,7 @@ def create_app(model_path=None):
             ready=True,
             name=bundle.get('name', 'Random Forest · theo giờ'),
             dataset='hour',
+            uses_previous_day=totals is not None,
             evaluation_note=report.get('evaluation_note'),
             years=[2011, 2012],
             test=report.get('test', {}),
@@ -190,6 +201,8 @@ def create_app(model_path=None):
         except ValueError as error:
             return jsonify(error=str(error)), 400
         try:
+            if totals is not None:
+                frame[PREVIOUS_DAY] = previous_day_rentals([day], totals)
             hourly_frame = pd.concat([frame] * 24, ignore_index=True)
             hourly_frame['hr'] = range(24)
             values = np.asarray(bundle['pipeline'].predict(hourly_frame), dtype=float)
@@ -208,7 +221,7 @@ def create_app(model_path=None):
                 }
                 for hour, count in enumerate(values)
             ]
-            missing = [c for c in FEATURES if pd.isna(frame.iloc[0][c])]
+            missing = [c for c in frame.columns if pd.isna(frame.iloc[0][c])]
             return jsonify(
                 prediction=value,
                 rounded_prediction=int(math.floor(value + 0.5)),
@@ -218,7 +231,7 @@ def create_app(model_path=None):
                 hourly=hourly,
                 features={
                     c: None if pd.isna(frame.iloc[0][c]) else float(frame.iloc[0][c])
-                    for c in FEATURES
+                    for c in frame.columns
                 },
             )
         except Exception:
