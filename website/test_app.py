@@ -34,6 +34,8 @@ class WebsiteTests(unittest.TestCase):
                 self.assertEqual(response.status_code, 200)
         status = self.client.get('/api/model')
         self.assertTrue(status.json['ready'])
+        from sklearn.ensemble import RandomForestRegressor
+        self.assertIsInstance(self.bundle['pipeline'].named_steps['model'], RandomForestRegressor)
         self.assertEqual(status.json['test'], self.bundle['report']['test'])
         self.assertEqual(len(status.json['model_sha256']), 64)
 
@@ -118,7 +120,7 @@ class WebsiteTests(unittest.TestCase):
                   'MAE': mean_absolute_error(test['cnt'], predictions), 'R2': r2_score(test['cnt'], predictions)}
         for metric, value in actual.items():
             self.assertAlmostEqual(value, self.bundle['report']['test'][metric], places=8)
-        print('Original Colab test metrics reproduced:', json.dumps(actual))
+        print('Random Forest 85% test metrics reproduced:', json.dumps(actual))
 
 
 if __name__ == '__main__':

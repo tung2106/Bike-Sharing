@@ -11,7 +11,7 @@ import urllib.request
 import webbrowser
 from pathlib import Path
 
-BASE_URL = 'http://127.0.0.1:8000'
+BASE_URL = 'http://127.0.0.1:8001'
 ROOT = Path(__file__).resolve().parent
 HTTP = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
@@ -30,7 +30,7 @@ def website_ready():
 def port_in_use():
     with socket.socket() as connection:
         connection.settimeout(1)
-        return connection.connect_ex(('127.0.0.1', 8000)) == 0
+        return connection.connect_ex(('127.0.0.1', 8001)) == 0
 
 
 def open_browser():
@@ -44,7 +44,7 @@ def main():
         open_browser()
         return
     if port_in_use():
-        raise RuntimeError('Cong 8000 dang duoc su dung nhung mo hinh Bike Rental chua san sang. '
+        raise RuntimeError('Cong 8001 dang duoc su dung nhung mo hinh Bike Rental chua san sang. '
                            'Kiem tra cua so may chu dang chay; khong khoi dong them mot ban.')
     print('Dang khoi dong Bike Rental. Trinh duyet se tu mo khi mo hinh san sang.', flush=True)
     server = subprocess.Popen([sys.executable, '-B', str(ROOT / 'app.py')], cwd=ROOT)

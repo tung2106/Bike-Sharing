@@ -10,7 +10,7 @@ const path = require('node:path');
     const page = await browser.newPage({ viewport: { width: 1440, height: 1080 }, deviceScaleFactor: 1 });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto('http://127.0.0.1:8000', { waitUntil: 'networkidle' });
+    await page.goto('http://127.0.0.1:8001', { waitUntil: 'networkidle' });
     await page.waitForFunction(() => !document.getElementById('predict-button').disabled);
     assert.equal(await page.locator('#model-status').innerText(), 'Mô hình đã sẵn sàng');
     await page.getByRole('button', { name: 'Tính dự đoán' }).click();

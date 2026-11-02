@@ -14,6 +14,7 @@ import pandas as pd
 import sklearn
 from flask import Flask, jsonify, render_template, request
 from sklearn.exceptions import InconsistentVersionWarning
+from sklearn.ensemble import RandomForestRegressor
 
 ROOT = Path(__file__).resolve().parent
 FEATURES = ['temp', 'atemp', 'hum', 'windspeed', 'yr', 'holiday', 'workingday',
@@ -93,6 +94,8 @@ def load_model(model_path):
         raise RuntimeError(f'Cần scikit-learn {trained}, hiện đang dùng {sklearn.__version__}.')
     if not callable(getattr(bundle.get('pipeline'), 'predict', None)):
         raise RuntimeError('Bundle không có pipeline dự đoán hợp lệ.')
+    if not isinstance(bundle['pipeline'].named_steps.get('model'), RandomForestRegressor):
+        raise RuntimeError('Website yêu cầu mô hình Random Forest theo giờ.')
     return bundle
 
 
@@ -120,9 +123,7 @@ def create_app(model_path=None):
 
     @app.get('/')
     def index():
-        from sklearn.ensemble import RandomForestRegressor
-        is_rf = bundle is not None and isinstance(bundle['pipeline'].named_steps.get('model'), RandomForestRegressor)
-        return render_template('index.html', show_rf_comparison=is_rf)
+        return render_template('index.html', show_rf_comparison=bundle is not None)
 
     @app.get('/api/model')
     def model_info():
@@ -174,5 +175,5 @@ def create_app(model_path=None):
 
 if __name__ == '__main__':
     from waitress import serve
-    print('Mở website tại http://127.0.0.1:8000', flush=True)
-    serve(create_app(), host='127.0.0.1', port=8000, threads=4)
+    print('Mở website tại http://127.0.0.1:8001', flush=True)
+    serve(create_app(), host='127.0.0.1', port=8001, threads=4)

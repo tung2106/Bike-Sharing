@@ -1,22 +1,14 @@
 WEBSITE BIKE RENTAL — DỰ ĐOÁN LƯỢT THUÊ XE THEO GIỜ
 
-NHÁNH phien-ban-2: models/model.joblib là HistGradientBoostingRegressor.
-Mô hình được chọn qua 3 lượt đánh giá theo thời gian và huấn luyện lại trên 85% đầu.
-Test lịch sử: MAE 40,58; RMSE 63,79; R² 0,912. Tập test đã được xem trước,
-chưa chứng minh khả năng dự báo ở khu vực mới. Nhánh main dùng Random Forest.
-Không đặt BIKE_MODEL_PATH trỏ đến mô hình khác nếu muốn dùng mặc định của nhánh.
-
-Giao diện xanh trắng và mục Khám phá dữ liệu lịch sử dùng chung ở cả hai nhánh.
-Lịch sử đọc du_lieu/goc/hour.csv; đây là dữ liệu thực tế, không phải dự đoán.
-
-Tái lập thử nghiệm từ thư mục gốc repository:
-    website\.venv\Scripts\python.exe experiments/hourly_v2/train_experiment.py
-Mô hình RF gốc làm đối chứng nằm trong experiments/hourly_v2/baseline/model.joblib.
-Kết quả mới nằm trong experiments/hourly_v2/runs/<thời gian UTC>/.
-Các mô hình thử nghiệm kết hợp RF + HGB không thuộc phiên bản này.
+Website dùng Random Forest huấn luyện trên 85% dữ liệu theo thứ tự thời gian.
+models/model.joblib là bản triển khai của experiments/rf85/model.joblib.
+Trên 2.608 giờ kiểm tra, RF đạt MAE 54,67, RMSE 82,07 và R² 0,8544.
+HGB chỉ dùng trong thực nghiệm đối chứng. Xem experiments/rf85/comparison.csv.
+Chạy lại phép so sánh từ thư mục gốc:
+    website\.venv\Scripts\python.exe experiments/rf85/train_rf85.py
 
 CHẠY TRÊN WINDOWS
-Trong thư mục Bike-Sharing, nhấp đúp scripts\MO_WEBSITE.cmd.
+Trong thư mục Bike-Sharing-phien-ban-2, nhấp đúp scripts\MO_WEBSITE.cmd.
 Chương trình tự khởi động máy chủ và mở giao diện trên trình duyệt mặc định.
 Không cần gõ hoặc lưu link, không mở trực tiếp templates/index.html.
 Giữ cửa sổ máy chủ mở khi dùng; nhấn Ctrl+C để dừng.
@@ -75,7 +67,7 @@ KIẾN TRÚC
 app.py: Flask API, kiểm tra đầu vào, đổi đơn vị và gọi pipeline.predict().
 templates/index.html: giao diện tiếng Việt.
 static/: kiểu dáng, tương tác, biểu tượng.
-models/: mô hình và thông tin gốc từ Colab.
+models/: mô hình và thông tin huấn luyện Random Forest 85%.
 GET /api/model: tình trạng và chỉ số mô hình.
 POST /api/predict: dự đoán từ ngày, giờ và điều kiện thời tiết.
 Model chỉ tải ở máy chủ, không gửi file joblib tới trình duyệt.
@@ -83,14 +75,14 @@ Model chỉ tải ở máy chủ, không gửi file joblib tới trình duyệt.
 KIỂM TRA
     .\.venv\Scripts\python.exe test_app.py
 Kiểm tra dự đoán API với pipeline gốc, đầu vào thiếu/sai, ánh xạ ngày và mùa,
-cũng như đối chiếu RMSE/MAE/R² trên tập test với kết quả đã lưu ở Colab.
+cũng như đối chiếu RMSE/MAE/R² trên tập test với kết quả RF 85% đã lưu.
 Bài kiểm tra chỉ đối chiếu mô hình cố định, không chọn lại tham số bằng test.
 File CSV gốc để đối chiếu nằm tại ../du_lieu/goc/hour.csv so với thư mục website.
 Nếu chỉ giải nén gói website riêng, kiểm tra đối chiếu CSV sẽ được bỏ qua khi thiếu file này.
 
 ĐƯA LÊN MẠNG
 Bản này chạy cục bộ. Có thể triển khai trên máy chủ hỗ trợ Python bằng Waitress:
-    waitress-serve --listen=0.0.0.0:8000 --call app:create_app
+    waitress-serve --listen=0.0.0.0:8001 --call app:create_app
 Cần cài requirements.txt và đưa kèm models/model.joblib.
 Chưa triển khai hoặc cấu hình tên miền trong lần xây dựng bản cục bộ này.
 
