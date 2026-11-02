@@ -1,68 +1,96 @@
-CẤU TRÚC DỰ ÁN TT_CSN
+﻿CẤU TRÚC DỰ ÁN BIKE SHARING
 
-scripts\MO_WEBSITE.cmd          Nhấp đúp để tự khởi động và mở website, không cần nhập link.
+Tên thư mục dùng tiếng Anh, chữ thường và dấu gạch dưới.
+Giữ website/ tại chỗ để môi trường .venv và lệnh khởi động tiếp tục hoạt động.
 
-du_lieu/
-  goc/                  day.csv, hour.csv và Readme.txt gốc.
-  da_xu_ly/             Dữ liệu đã tiền xử lý bằng script Python ban đầu.
-    day/                train.csv, validation.csv, test.csv, thông số xử lý, báo cáo.
-    hour/               Các file tương tự cho dữ liệu theo giờ.
-    HUONG_DAN.txt        Cách dùng các file đã chia.
+THƯ MỤC CHÍNH
+  website/                         Ứng dụng Flask đang chạy.
+    app.py                         API dự đoán Random Forest.
+    history.py                     API lịch sử và biểu đồ đối chiếu dự đoán.
+    templates/, static/            HTML, CSS, JavaScript, ảnh.
+    models/                        Mô hình triển khai và thông tin huấn luyện.
+    tests/                         Kiểm thử API, mô hình và giao diện.
+    setup.ps1, start.ps1            Cài đặt và khởi động.
+    open_website.py                 Mở trình duyệt và máy chủ.
+    .venv/                         Môi trường Python cục bộ, không đưa vào Git.
+  data/
+    raw/                           Dữ liệu gốc day.csv, hour.csv và mô tả.
+    processed/                     Đầu ra tiền xử lý, chia theo day/ và hour/.
+  training/
+    random_forest/
+      train.py                     Huấn luyện bản cuối trên 85% dữ liệu.
+      model.joblib                 Kết quả huấn luyện; bản triển khai ở website/models/.
+      metrics.json, comparison.csv Chỉ số và đối chiếu RF/HGB.
+      environment.json             Phiên bản thư viện khi huấn luyện.
+      provenance.json              Nguồn gốc và mã kiểm tra của lần chạy đã lưu.
+    colab/
+      colab_train.py               Khởi tạo RandomForestRegressor, chọn tham số, đánh giá.
+      Bike_Sharing_Colab.ipynb      Notebook chạy trên Google Colab.
+      build_colab_notebook.py      Tạo notebook và gói ZIP vào dist/ khi cần.
+      verify_colab.py              Kiểm tra notebook với lưới tham số nhỏ.
+      results/                     Notebook có kết quả thực tế.
+  experiments/
+    hourly_comparison/             Thực nghiệm đối chiếu và baseline cho huấn luyện RF.
+    ensemble_blend/                Thực nghiệm kết hợp RF/HGB.
+  scripts/
+    MO_WEBSITE.cmd                 Nhấp đúp để mở website.
+    preprocess.py                  Tiền xử lý dữ liệu.
+  docs/
+    reports/                      Các báo cáo Word, giữ tên để nhận biết phiên bản.
+      tools/create_report.py      Mã tạo báo cáo.
+    meetings/                     Biên bản làm việc theo tuần.
+      sources/                    Bảng tính nguồn của biên bản.
 
-tien_xu_ly/
-  preprocess.py         Xử lý thiếu, mã hóa, chia 70/15/15 và xuất CSV.
+CHẠY WEBSITE
+  Nhấp đúp scripts\MO_WEBSITE.cmd.
+  Hoặc từ thư mục gốc: .\website\start.ps1
+  Cài môi trường nếu chưa có: .\website\setup.ps1
 
-colab/
-  Bike_Sharing_Colab.ipynb  Notebook sẵn sàng tải lên Colab.
-  colab_train.py           Hàm chia dữ liệu, train, chọn tham số, đánh giá và lưu model.
-  build_colab_notebook.py  Tạo lại notebook và gói ZIP Colab từ mã nguồn.
-  verify_colab.py          Kiểm thử quy trình Colab trên máy với lưới tham số nhỏ.
-  HUONG_DAN_COLAB.txt      Hướng dẫn sử dụng trên Google Drive/Colab.
-  ket_qua/
-    Colab_shared_review.ipynb  Bản tải về có kết quả chạy thực tế trên Colab.
+KIỂM THỬ (TỪ THƯ MỤC GỐC)
+  .\website\.venv\Scripts\python.exe -B -m unittest discover -s website/tests -p "test_*.py"
+  Kiểm tra giao diện cần Playwright và website đang chạy:
+  node website/tests/check_browser.cjs
 
-website/
-  app.py                  Máy chủ và API dự đoán.
-  templates/              Giao diện HTML.
-  static/                 CSS, JavaScript và biểu tượng.
-  models/                 Mô hình hour thật, metrics, phiên bản và nguồn tải.
-  setup.ps1, start.ps1    Cài đặt và khởi động website.
-  open_website.py         Tự mở trình duyệt khi mô hình đã sẵn sàng.
-  requirements*.txt      Danh sách thư viện.
-  test_app.py             Kiểm thử API và đối chiếu mô hình.
-  check_browser.cjs       Kiểm thử giao diện tự động.
-  HUONG_DAN.txt           Hướng dẫn chạy website.
-  .venv/                  Môi trường đang dùng để chạy website; cần giữ lại.
+TÌM CODE RANDOM FOREST
+  training/colab/colab_train.py: khai báo RandomForestRegressor và chọn tham số.
+  training/random_forest/train.py: clone pipeline baseline, fit trên 85% dữ liệu.
+  Chạy huấn luyện lại:
+  .\website\.venv\Scripts\python.exe training/random_forest/train.py
+  Lệnh này ghi lại kết quả trong training/random_forest/, không tự thay mô hình website.
 
-ban_dong_goi/
-  Bike_Sharing_Colab.zip  Notebook, code và dữ liệu gốc để đưa lên Colab.
-  Velo_Hour_Website.zip   Website kèm mô hình; không chứa môi trường ảo hoặc cache.
+TIỀN XỬ LÝ VÀ ĐÓNG GÓI COLAB
+  .\website\.venv\Scripts\python.exe scripts/preprocess.py
+  .\website\.venv\Scripts\python.exe training/colab/build_colab_notebook.py
+  dist/ được tạo khi xuất gói mới và không đưa vào Git.
 
-rac/
-  cache/                 Cache Python đã dọn khỏi các thư mục làm việc.
-  trang_tai_tam/         Bản HTML tạm của trang Google Drive.
-  kiem_thu/              Mô hình thử nghiệm, kết quả tạm và ảnh kiểm tra giao diện.
-  moi_truong_cu/         Môi trường dùng để kiểm thử Colab trước đây.
-  ban_dong_goi_cu/       Gói ZIP trước khi sắp xếp; đã có gói mới ở ban_dong_goi.
-  nhat_ky/              Danh sách đường dẫn cũ/mới để đối chiếu việc di chuyển.
-  HUONG_DAN.txt           Giải thích nội dung thư mục rác.
+PHỤ THUỘC CẦN GIỮ
+- Website dùng website/models/model.joblib và data/raw/hour.csv.
+- Biểu đồ RF dùng experiments/hourly_comparison/runs/20261025_024202/test_predictions.csv.
+- Huấn luyện RF dùng training/colab/colab_train.py, baseline/model.joblib và
+  runs/20261025_024202/model.joblib trong experiments/hourly_comparison/.
+- Hai model ở training/random_forest/ và website/models/ có vai trò khác nhau:
+  kết quả huấn luyện và bản triển khai. Không tự xóa một bản khi huấn luyện lại.
+- Không đổi chỗ website/.venv; cần tạo lại môi trường nếu đổi thư mục website.
 
-LỆNH THƯỜNG DÙNG (CHẠY TỪ THƯ MỤC TT_CSN)
-Tiền xử lý lại:
-  python tien_xu_ly/preprocess.py
-Tạo lại notebook và gói Colab:
-  python colab/build_colab_notebook.py
-Mở website:
-  Nhấp đúp scripts\MO_WEBSITE.cmd, hoặc chạy .\website\start.ps1.
-  Trình duyệt tự mở. Giữ cửa sổ máy chủ mở khi sử dụng.
-Kiểm thử website:
-  .\website\.venv\Scripts\python.exe -B website/test_app.py
+ĐÃ DỌN
+- Xóa hai gói ZIP cũ trong ban_dong_goi/ vì không phản ánh website hiện tại.
+- Xóa 13 ảnh PNG và PDF render báo cáo; giữ báo cáo Word và mã tạo báo cáo.
+- Xóa scripts/MO_RANDOM_FOREST.cmd trùng chức năng với MO_WEBSITE.cmd.
+- Xóa website/open_model.py là lối mở tương thích cũ, không được code khác gọi.
+- Giữ các báo cáo, biên bản, notebook kết quả và mô hình thực nghiệm.
 
-LƯU Ý
-- Cấu trúc trên là của máy tính này. Đường dẫn Google Drive của notebook vẫn là
-  MyDrive/TT_CSN/data và MyDrive/TT_CSN/runs, không cần đổi trên Colab.
-- du_lieu/da_xu_ly là đầu ra của preprocess.py. Mô hình website dùng pipeline
-  scikit-learn riêng đã lưu trong website/models/model.joblib.
-- Bản notebook có kết quả thật và mô hình website không phải file rác.
-- Không có file nào bị xóa trong lần sắp xếp này.
-- Không di chuyển website/.venv vì các môi trường Python chứa đường dẫn cài đặt.
+ĐỐI CHIẾU VỚI TÀI LIỆU CŨ
+  du_lieu/goc/              -> data/raw/
+  du_lieu/da_xu_ly/         -> data/processed/
+  tien_xu_ly/preprocess.py  -> scripts/preprocess.py
+  colab/                   -> training/colab/ (ket_qua/ đổi thành results/)
+  experiments/rf85/        -> training/random_forest/ (train_rf85.py đổi thành train.py)
+  experiments/hourly_v2/   -> experiments/hourly_comparison/
+  experiments/rf_hgb_blend/ -> experiments/ensemble_blend/
+  tai_lieu/bao_cao/         -> docs/reports/
+  tai_lieu/bien_ban/        -> docs/meetings/
+  ban_dong_goi/             -> dist/ cho các bản xuất mới
+
+Các báo cáo, notebook kết quả và JSON nguồn gốc đã lưu là bằng chứng lịch sử;
+đường dẫn/mã hash bên trong chúng có thể thuộc cấu trúc cũ. Không sửa dữ liệu
+lịch sử để làm như đã huấn luyện lại. Đường dẫn Google Drive vẫn giữ nguyên.

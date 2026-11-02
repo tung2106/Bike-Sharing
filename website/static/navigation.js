@@ -3,8 +3,10 @@
   const links = [...document.querySelectorAll('.rail-menu a')];
   const title = document.getElementById('view-name');
   function showView() {
-    const selected = links.find(link => link.hash === location.hash) || links[0];
-    for (const panel of views) panel.hidden = '#' + panel.dataset.view !== selected.hash;
+    const selected =
+      links.find((link) => link.hash === location.hash) || links[0];
+    for (const panel of views)
+      panel.hidden = '#' + panel.dataset.view !== selected.hash;
     for (const link of links) {
       if (link === selected) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
@@ -15,7 +17,7 @@
   showView();
   window.addEventListener('hashchange', () => {
     showView();
-    title.focus({preventScroll:true});
+    title.focus({ preventScroll: true });
     window.scrollTo(0, 0);
   });
 })();
@@ -49,18 +51,30 @@
     }
   } catch {}
   function save() {
-    try { localStorage.setItem('bike-rental.sidebar', JSON.stringify({width:preferredWidth, closed})); } catch {}
+    try {
+      localStorage.setItem(
+        'bike-rental.sidebar',
+        JSON.stringify({ width: preferredWidth, closed })
+      );
+    } catch {}
   }
   function bounds() {
     const w = document.documentElement.clientWidth;
     const min = w <= 600 ? 84 : w <= 900 ? 140 : 170;
     const max = Math.max(min, Math.min(360, Math.floor(w * 0.44), w - 230));
-    return {min, max, initial: w <= 600 ? 84 : w <= 900 ? 145 : w <= 1150 ? 190 : 224};
+    return {
+      min,
+      max,
+      initial: w <= 600 ? 84 : w <= 900 ? 145 : w <= 1150 ? 190 : 224
+    };
   }
   function apply() {
-    const {min, max, initial} = bounds();
+    const { min, max, initial } = bounds();
     const width = Math.max(min, Math.min(max, preferredWidth ?? initial));
-    document.body.style.setProperty('--sidebar-size', (closed ? 0 : width) + 'px');
+    document.body.style.setProperty(
+      '--sidebar-size',
+      (closed ? 0 : width) + 'px'
+    );
     rail.hidden = grip.hidden = closed;
     toggle.textContent = closed ? '☰ Hiện menu' : '☰ Ẩn menu';
     toggle.setAttribute('aria-expanded', String(!closed));
@@ -70,26 +84,42 @@
     grip.setAttribute('aria-valuetext', width + ' pixel');
   }
   function resize(value) {
-    const {min,max} = bounds();
+    const { min, max } = bounds();
     preferredWidth = Math.max(min, Math.min(max, Math.round(value)));
     apply();
   }
-  toggle.onclick = () => { closed = !closed; apply(); save(); };
+  toggle.onclick = () => {
+    closed = !closed;
+    apply();
+    save();
+  };
   let offset = 0;
-  grip.onpointerdown = e => {
+  grip.onpointerdown = (e) => {
     if (e.button !== 0 || !e.isPrimary) return;
     offset = e.clientX - rail.getBoundingClientRect().right;
     grip.setPointerCapture(e.pointerId);
     document.body.classList.add('resizing-menu');
   };
-  grip.onpointermove = e => { if (grip.hasPointerCapture(e.pointerId)) resize(e.clientX - offset); };
-  grip.onlostpointercapture = () => { document.body.classList.remove('resizing-menu'); save(); };
-  grip.onkeydown = e => {
-    const {min,max} = bounds();
+  grip.onpointermove = (e) => {
+    if (grip.hasPointerCapture(e.pointerId)) resize(e.clientX - offset);
+  };
+  grip.onlostpointercapture = () => {
+    document.body.classList.remove('resizing-menu');
+    save();
+  };
+  grip.onkeydown = (e) => {
+    const { min, max } = bounds();
     const width = rail.getBoundingClientRect().width;
-    const next = {ArrowLeft:width-12, ArrowRight:width+12, Home:min, End:max}[e.key];
+    const next = {
+      ArrowLeft: width - 12,
+      ArrowRight: width + 12,
+      Home: min,
+      End: max
+    }[e.key];
     if (next === undefined) return;
-    e.preventDefault(); resize(next); save();
+    e.preventDefault();
+    resize(next);
+    save();
   };
   window.addEventListener('resize', apply);
   apply();

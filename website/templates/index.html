@@ -1,152 +1,501 @@
 <!doctype html>
 <html lang="vi">
-<head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Bike Rental</title>
-  <meta name="description" content="Ước tính số lượt thuê xe đạp theo giờ từ mô hình Bike Sharing đã huấn luyện.">
-  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <script defer src="{{ url_for('static', filename='app.js') }}"></script>
-<script defer src="{{ url_for('static', filename='history.js') }}"></script>
-  <script defer src="{{ url_for('static', filename='navigation.js') }}"></script>
-</head>
-<body>
-  <a class="skip" href="#main">Đến nội dung chính</a>
-  <aside class="rail" aria-label="Thông tin ứng dụng">
-    <a class="brand" href="#trang-chu" aria-label="Bike Rental, trang chủ"><span>Bike Rental</span></a>
-    <div class="rail-title">BIKE SHARING</div>
-    <nav class="rail-menu" aria-label="Chức năng Bike Rental">
-      <a href="#trang-chu" aria-current="page">Trang chủ</a>
-      <a href="#du-doan">Dự đoán theo giờ</a>
-      <a href="#cao-diem">Giờ cao điểm</a>
-      <a href="#lich-su">Khám phá lịch sử</a>
-      {% if show_rf_comparison %}<a href="#doi-chieu">Đối chiếu thực tế</a>{% endif %}
-    </nav>
-    <div class="rail-bottom"><span class="mini-line"></span><strong>Mỗi giờ, một góc nhìn.</strong><p>Dữ liệu Capital Bikeshare<br>Washington, D.C. · 2011–2012</p></div>
-  </aside>
-  <main id="main">
-    <header class="topbar"><span id="view-name" tabindex="-1">Trang chủ</span><span class="status" id="model-status">Đang kết nối mô hình…</span></header>
-    <section class="page-heading home-hero" data-view="trang-chu">
-      <div><div class="eyebrow">DỮ LIỆU CHO MỖI CHUYẾN ĐI</div>
-        <h1>Dự đoán lượt thuê xe đạp theo giờ</h1>
-        <p>Chọn một ngày. Khám phá nhu cầu theo giờ. Tìm thời điểm thuê xe sôi động nhất.</p>
-        <div class="home-actions"><a class="home-start" href="#du-doan">Bắt đầu dự đoán →</a><a class="home-secondary" href="#lich-su">Khám phá dữ liệu</a></div>
-        <p class="home-source">Mô phỏng từ dữ liệu Capital Bikeshare · 2011–2012</p>
-      </div><img class="hero-bike" src="{{ url_for('static', filename='bike-sky.png') }}" width="300" height="200" alt="Xe đạp màu xanh da trời">
-    </section>
-    <section class="home-guide" data-view="trang-chu" aria-label="Cách sử dụng">
-      <div><span>01</span><h2>Chọn điều kiện</h2><p>Nhập ngày và thời tiết bạn muốn khảo sát.</p></div>
-      <div><span>02</span><h2>Xem nhịp thuê xe</h2><p>Đọc biểu đồ 24 giờ và các khung giờ cao điểm.</p></div>
-      <div><span>03</span><h2>Đối chiếu dữ liệu</h2><p>Khám phá lịch sử để hiểu kết quả rõ hơn.</p></div>
-    </section>
-    <div class="workspace view-panel" data-view="du-doan" hidden>
-      <section class="input-panel" aria-labelledby="input-title">
-        <div class="panel-heading"><h2 id="input-title">Bạn muốn xem ngày nào?</h2><span class="step-label">DỰ ĐOÁN THEO GIỜ</span></div>
-        <form id="prediction-form">
-          <fieldset><legend><span class="section-number">01</span> Thời điểm</legend>
-            <div class="field-grid"><label for="date">Ngày tham chiếu<input id="date" name="date" type="date" min="2011-01-01" max="2012-12-31" value="2012-05-01" required aria-describedby="date-help"></label><label for="hour">Khung giờ<select id="hour" name="hour" required></select></label></div>
-            <p class="field-help" id="date-help">Mô phỏng trong giai đoạn 2011–2012 mà mô hình đã học.</p>
-            <label class="check-field"><input type="checkbox" id="holiday" name="holiday"><span>Đây là ngày lễ</span></label>
-            <div class="calendar-info" id="calendar-info">Thứ Ba · Mùa xuân · Ngày làm việc</div>
-          </fieldset>
-          <fieldset><legend><span class="section-number">02</span> Điều kiện thời tiết</legend>
-            <label for="weather">Tình trạng thời tiết<select id="weather" name="weather"><option value="1">Trời quang / ít mây</option><option value="2">Sương mù / nhiều mây</option><option value="3">Mưa nhẹ / tuyết nhẹ</option><option value="4">Mưa lớn / tuyết lớn</option></select></label>
-            <div class="field-grid weather-grid">
-              <label for="temperature">Nhiệt độ<div class="unit-input"><input id="temperature" name="temperature" type="number" min="-8" max="39" step="any" value="24" placeholder="Để trống nếu chưa biết"><span>°C</span></div></label>
-              <label for="feels_like">Nhiệt độ cảm nhận<div class="unit-input"><input id="feels_like" name="feels_like" type="number" min="-16" max="50" step="any" value="26" placeholder="Để trống nếu chưa biết"><span>°C</span></div></label>
-              <label for="humidity">Độ ẩm<div class="unit-input"><input id="humidity" name="humidity" type="number" min="0" max="100" step="any" value="65" placeholder="Để trống nếu chưa biết"><span>%</span></div></label>
-              <label for="wind_speed">Tốc độ gió<div class="unit-input"><input id="wind_speed" name="wind_speed" type="number" min="0" max="67" step="any" value="12" placeholder="Để trống nếu chưa biết"><span>km/h</span></div></label>
-            </div>
-            <p class="field-help">Nếu chưa biết một thông số, bạn có thể để trống. Mô hình sẽ dùng giá trị trung vị từ dữ liệu huấn luyện.</p>
-          </fieldset>
-          <div id="form-error" role="alert" hidden></div>
-          <button class="primary-button" id="predict-button" type="submit" disabled>Tính dự đoán</button>
-        </form>
+  <head>
+    <meta charset="utf-8" /><meta
+      name="viewport"
+      content="width=device-width,initial-scale=1"
+    />
+    <title>Bike Rental</title>
+    <meta
+      name="description"
+      content="Ước tính số lượt thuê xe đạp theo giờ từ mô hình Bike Sharing đã huấn luyện."
+    />
+    <link
+      rel="icon"
+      href="{{ url_for('static', filename='favicon.svg') }}"
+      type="image/svg+xml"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='history.js') }}"></script>
+    <script
+      defer
+      src="{{ url_for('static', filename='navigation.js') }}"
+    ></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Đến nội dung chính</a>
+    <aside class="rail" aria-label="Thông tin ứng dụng">
+      <a class="brand" href="#trang-chu" aria-label="Bike Rental, trang chủ"
+        ><span>Bike Rental</span></a
+      >
+      <div class="rail-title">BIKE SHARING</div>
+      <nav class="rail-menu" aria-label="Chức năng Bike Rental">
+        <a href="#trang-chu" aria-current="page">Trang chủ</a>
+        <a href="#du-doan">Dự đoán theo giờ</a>
+        <a href="#cao-diem">Giờ cao điểm</a>
+        <a href="#lich-su">Khám phá lịch sử</a>
+        {% if show_rf_comparison %}<a href="#doi-chieu">Đối chiếu thực tế</a>{%
+        endif %}
+      </nav>
+      <div class="rail-bottom"
+        ><span class="mini-line"></span><strong>Mỗi giờ, một góc nhìn.</strong
+        ><p>Dữ liệu Capital Bikeshare<br />Washington, D.C. · 2011–2012</p></div
+      >
+    </aside>
+    <main id="main">
+      <header class="topbar"
+        ><span id="view-name" tabindex="-1">Trang chủ</span
+        ><span class="status" id="model-status"
+          >Đang kết nối mô hình…</span
+        ></header
+      >
+      <section class="page-heading home-hero" data-view="trang-chu">
+        <div
+          ><div class="eyebrow">DỮ LIỆU CHO MỖI CHUYẾN ĐI</div>
+          <h1>Dự đoán lượt thuê xe đạp theo giờ</h1>
+          <p
+            >Chọn một ngày. Khám phá nhu cầu theo giờ. Tìm thời điểm thuê xe sôi
+            động nhất.</p
+          >
+          <div class="home-actions"
+            ><a class="home-start" href="#du-doan">Bắt đầu dự đoán →</a
+            ><a class="home-secondary" href="#lich-su">Khám phá dữ liệu</a></div
+          >
+          <p class="home-source"
+            >Mô phỏng từ dữ liệu Capital Bikeshare · 2011–2012</p
+          > </div
+        ><img
+          class="hero-bike"
+          src="{{ url_for('static', filename='bike-sky.png') }}"
+          width="300"
+          height="200"
+          alt="Xe đạp màu xanh da trời"
+        />
       </section>
-      <div class="result-column">
-        <section class="result-panel" aria-labelledby="result-title" aria-live="polite" aria-atomic="true">
-          <div class="result-top"><span class="eyebrow">KẾT QUẢ ƯỚC TÍNH</span><span class="result-label" id="result-state">Chưa dự đoán</span></div>
-          <h2 id="result-title">Nhu cầu trong một giờ</h2>
-          <div class="prediction"><span id="prediction-value">—</span><span class="prediction-unit">lượt thuê</span></div>
-          <p id="prediction-caption">Kết quả sẽ xuất hiện sau khi bạn chọn “Tính dự đoán”.</p>
-          <div class="result-divider"></div>
-          <div class="result-facts"><div><span>Thời điểm</span><strong id="result-time">—</strong></div><div><span>Thời tiết</span><strong id="result-weather">—</strong></div></div>
-          <p id="imputation-note" class="imputation-note" hidden></p>
+      <section
+        class="home-guide"
+        data-view="trang-chu"
+        aria-label="Cách sử dụng"
+      >
+        <div
+          ><span>01</span><h2>Chọn điều kiện</h2
+          ><p>Nhập ngày và thời tiết bạn muốn khảo sát.</p></div
+        >
+        <div
+          ><span>02</span><h2>Xem nhịp thuê xe</h2
+          ><p>Đọc biểu đồ 24 giờ và các khung giờ cao điểm.</p></div
+        >
+        <div
+          ><span>03</span><h2>Đối chiếu dữ liệu</h2
+          ><p>Khám phá lịch sử để hiểu kết quả rõ hơn.</p></div
+        >
+      </section>
+      <div class="workspace view-panel" data-view="du-doan" hidden>
+        <section class="input-panel" aria-labelledby="input-title">
+          <div class="panel-heading"
+            ><h2 id="input-title">Bạn muốn xem ngày nào?</h2
+            ><span class="step-label">DỰ ĐOÁN THEO GIỜ</span></div
+          >
+          <form id="prediction-form">
+            <fieldset
+              ><legend><span class="section-number">01</span> Thời điểm</legend>
+              <div class="field-grid"
+                ><label for="date"
+                  >Ngày tham chiếu<input
+                    id="date"
+                    name="date"
+                    type="date"
+                    min="2011-01-01"
+                    max="2012-12-31"
+                    value="2012-05-01"
+                    required
+                    aria-describedby="date-help" /></label
+                ><label for="hour"
+                  >Khung giờ<select
+                    id="hour"
+                    name="hour"
+                    required
+                  ></select></label
+              ></div>
+              <p class="field-help" id="date-help"
+                >Mô phỏng trong giai đoạn 2011–2012 mà mô hình đã học.</p
+              >
+              <label class="check-field"
+                ><input type="checkbox" id="holiday" name="holiday" /><span
+                  >Đây là ngày lễ</span
+                ></label
+              >
+              <div class="calendar-info" id="calendar-info"
+                >Thứ Ba · Mùa xuân · Ngày làm việc</div
+              >
+            </fieldset>
+            <fieldset
+              ><legend
+                ><span class="section-number">02</span> Điều kiện thời
+                tiết</legend
+              >
+              <label for="weather"
+                >Tình trạng thời tiết<select id="weather" name="weather"
+                  ><option value="1">Trời quang / ít mây</option
+                  ><option value="2">Sương mù / nhiều mây</option
+                  ><option value="3">Mưa nhẹ / tuyết nhẹ</option
+                  ><option value="4">Mưa lớn / tuyết lớn</option></select
+                ></label
+              >
+              <div class="field-grid weather-grid">
+                <label for="temperature"
+                  >Nhiệt độ<div class="unit-input"
+                    ><input
+                      id="temperature"
+                      name="temperature"
+                      type="number"
+                      min="-8"
+                      max="39"
+                      step="any"
+                      value="24"
+                      placeholder="Để trống nếu chưa biết"
+                    /><span>°C</span></div
+                  ></label
+                >
+                <label for="feels_like"
+                  >Nhiệt độ cảm nhận<div class="unit-input"
+                    ><input
+                      id="feels_like"
+                      name="feels_like"
+                      type="number"
+                      min="-16"
+                      max="50"
+                      step="any"
+                      value="26"
+                      placeholder="Để trống nếu chưa biết"
+                    /><span>°C</span></div
+                  ></label
+                >
+                <label for="humidity"
+                  >Độ ẩm<div class="unit-input"
+                    ><input
+                      id="humidity"
+                      name="humidity"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="any"
+                      value="65"
+                      placeholder="Để trống nếu chưa biết"
+                    /><span>%</span></div
+                  ></label
+                >
+                <label for="wind_speed"
+                  >Tốc độ gió<div class="unit-input"
+                    ><input
+                      id="wind_speed"
+                      name="wind_speed"
+                      type="number"
+                      min="0"
+                      max="67"
+                      step="any"
+                      value="12"
+                      placeholder="Để trống nếu chưa biết"
+                    /><span>km/h</span></div
+                  ></label
+                >
+              </div>
+              <p class="field-help"
+                >Nếu chưa biết một thông số, bạn có thể để trống. Mô hình sẽ
+                dùng giá trị trung vị từ dữ liệu huấn luyện.</p
+              >
+            </fieldset>
+            <div id="form-error" role="alert" hidden></div>
+            <button
+              class="primary-button"
+              id="predict-button"
+              type="submit"
+              disabled
+              >Tính dự đoán</button
+            >
+          </form>
         </section>
-        <section class="quality-panel chart-panel" aria-labelledby="chart-title">
-          <div class="panel-heading"><h2 id="chart-title">Lượt thuê theo giờ</h2><span class="small-tag">24 GIỜ</span></div>
-          <p class="field-help">Ước tính cho ngày đã chọn, giữ nguyên điều kiện thời tiết ở cả 24 giờ.</p>
-          <p id="chart-status" class="field-help" role="status">Chọn “Tính dự đoán” để xem biểu đồ.</p>
-          <div id="hourly-chart" class="hourly-chart" hidden></div>
-
-          <a class="peak-input-link" href="#cao-diem">Xem giờ cao điểm →</a>
-          <details id="hourly-details" hidden><summary>Xem số liệu từng giờ</summary><div class="hourly-table-wrap"><table><caption id="hourly-caption"></caption><thead><tr><th scope="col">Khung giờ</th><th scope="col">Lượt thuê ước tính</th></tr></thead><tbody id="hourly-rows"></tbody></table></div></details>
-        </section>
-          
-        <details class="quality-panel model-details"><summary>Thông tin mô hình và độ chính xác</summary>
-          <div class="panel-heading"><h2 id="quality-title">Hiệu quả đã kiểm thử</h2><span class="small-tag">TẬP TEST</span></div>
-          <p id="active-model-name" class="field-help">Đang tải tên mô hình…</p>
-          <p id="evaluation-note" class="field-help" hidden></p>
-          <div class="metrics"><div><span>R²</span><strong id="r2-value">—</strong></div><div><span>MAE <small>lượt/giờ</small></span><strong id="mae-value">—</strong></div><div><span>RMSE</span><strong id="rmse-value">—</strong></div></div>
-          <p class="quality-note">MAE là sai lệch tuyệt đối trung bình trên tập test, không phải khoảng tin cậy cho từng dự đoán.</p>
-        </details>
-        <section class="context-note"><span class="info-icon" aria-hidden="true">i</span><div><h2>Đọc kết quả đúng bối cảnh</h2><p>Mô hình ước tính tổng lượt thuê của hệ thống Capital Bikeshare trong một giờ, không phải số xe còn trống ở một trạm. Dữ liệu 2011–2012 chưa xác nhận khả năng dự báo nhu cầu hiện tại.</p></div></section>
-      </div>
-    </div>
-
-    <section class="quality-panel view-panel" data-view="cao-diem" hidden aria-labelledby="peak-title">
-            <h2 id="peak-title">Giờ cao điểm</h2>
-            <p id="peak-status" class="field-help" role="status">Chọn “Tính dự đoán” để xem 3 khung giờ có lượt thuê ước tính cao nhất.</p>
-            <a href="#du-doan" class="peak-input-link">Đến phần nhập dự đoán</a>
-            <ol id="peak-list" class="peak-list" hidden></ol>
-            <p id="peak-note" class="field-help" hidden>Xếp hạng theo dự đoán chưa làm tròn; nếu bằng nhau, ưu tiên giờ sớm hơn. Giữ nguyên thời tiết đã nhập ở cả 24 giờ.</p>
+        <div class="result-column">
+          <section
+            class="result-panel"
+            aria-labelledby="result-title"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <div class="result-top"
+              ><span class="eyebrow">KẾT QUẢ ƯỚC TÍNH</span
+              ><span class="result-label" id="result-state"
+                >Chưa dự đoán</span
+              ></div
+            >
+            <h2 id="result-title">Nhu cầu trong một giờ</h2>
+            <div class="prediction"
+              ><span id="prediction-value">—</span
+              ><span class="prediction-unit">lượt thuê</span></div
+            >
+            <p id="prediction-caption"
+              >Kết quả sẽ xuất hiện sau khi bạn chọn “Tính dự đoán”.</p
+            >
+            <div class="result-divider"></div>
+            <div class="result-facts"
+              ><div
+                ><span>Thời điểm</span><strong id="result-time">—</strong></div
+              ><div
+                ><span>Thời tiết</span
+                ><strong id="result-weather">—</strong></div
+              ></div
+            >
+            <p id="imputation-note" class="imputation-note" hidden></p>
           </section>
-    <section class="quality-panel history-panel view-panel" data-view="lich-su" hidden aria-labelledby="history-title">
-      <div class="panel-heading"><h2 id="history-title">Khám phá dữ liệu lịch sử</h2><span class="small-tag">SỐ LIỆU THỰC TẾ</span></div>
-      <p class="field-help">Capital Bikeshare · 2011–2012 · Nguồn hour.csv. Thống kê dữ liệu đã ghi nhận, không phải kết quả dự đoán.</p>
-      <form id="history-form" class="history-filters">
-        <label>Từ ngày<input name="start" type="date" min="2011-01-01" max="2012-12-31" value="2011-01-01" required></label>
-        <label>Đến ngày<input name="end" type="date" min="2011-01-01" max="2012-12-31" value="2012-12-31" required></label>
-        <label>Loại ngày<select name="workingday"><option value="all">Tất cả</option><option value="1">Ngày làm việc</option><option value="0">Ngày nghỉ / ngày lễ</option></select></label>
-        <button class="primary-button" type="submit">Xem dữ liệu</button>
-      </form>
-      <p id="history-status" class="field-help" role="status"></p>
-      <div id="history-results" hidden>
-        <div class="history-metrics">
-          <div><span>Tổng lượt thuê</span><strong id="history-total"></strong></div>
-          <div><span>Trung bình / bản ghi giờ</span><strong id="history-average"></strong></div>
-          <div><span>Khách vãng lai (casual)</span><strong id="history-casual"></strong></div>
-          <div><span>Khách đăng ký (registered)</span><strong id="history-registered"></strong></div>
+          <section
+            class="quality-panel chart-panel"
+            aria-labelledby="chart-title"
+          >
+            <div class="panel-heading"
+              ><h2 id="chart-title">Lượt thuê theo giờ</h2
+              ><span class="small-tag">24 GIỜ</span></div
+            >
+            <p class="field-help"
+              >Ước tính cho ngày đã chọn, giữ nguyên điều kiện thời tiết ở cả 24
+              giờ.</p
+            >
+            <p id="chart-status" class="field-help" role="status"
+              >Chọn “Tính dự đoán” để xem biểu đồ.</p
+            >
+            <div id="hourly-chart" class="hourly-chart" hidden></div>
+
+            <a class="peak-input-link" href="#cao-diem">Xem giờ cao điểm →</a>
+            <details id="hourly-details" hidden
+              ><summary>Xem số liệu từng giờ</summary
+              ><div class="hourly-table-wrap"
+                ><table
+                  ><caption id="hourly-caption"></caption
+                  ><thead
+                    ><tr
+                      ><th scope="col">Khung giờ</th
+                      ><th scope="col">Lượt thuê ước tính</th></tr
+                    ></thead
+                  ><tbody id="hourly-rows"></tbody></table></div
+            ></details>
+          </section>
+
+          <details class="quality-panel model-details"
+            ><summary>Thông tin mô hình và độ chính xác</summary>
+            <div class="panel-heading"
+              ><h2 id="quality-title">Hiệu quả đã kiểm thử</h2
+              ><span class="small-tag">TẬP TEST</span></div
+            >
+            <p id="active-model-name" class="field-help"
+              >Đang tải tên mô hình…</p
+            >
+            <p id="evaluation-note" class="field-help" hidden></p>
+            <div class="metrics"
+              ><div><span>R²</span><strong id="r2-value">—</strong></div
+              ><div
+                ><span>MAE <small>lượt/giờ</small></span
+                ><strong id="mae-value">—</strong></div
+              ><div
+                ><span>RMSE</span><strong id="rmse-value">—</strong></div
+              ></div
+            >
+            <p class="quality-note"
+              >MAE là sai lệch tuyệt đối trung bình trên tập test, không phải
+              khoảng tin cậy cho từng dự đoán.</p
+            >
+          </details>
+          <section class="context-note"
+            ><span class="info-icon" aria-hidden="true">i</span
+            ><div
+              ><h2>Đọc kết quả đúng bối cảnh</h2
+              ><p
+                >Mô hình ước tính tổng lượt thuê của hệ thống Capital Bikeshare
+                trong một giờ, không phải số xe còn trống ở một trạm. Dữ liệu
+                2011–2012 chưa xác nhận khả năng dự báo nhu cầu hiện tại.</p
+              ></div
+            ></section
+          >
         </div>
-        <p>Giờ có trung bình cao nhất: <strong id="history-peak"></strong></p>
-        <div id="history-chart" class="hourly-chart"></div>
-        <p class="field-help">Mỗi điểm = tổng lượt thuê ở giờ đó ÷ số bản ghi của giờ đó sau khi lọc. Giờ thiếu dữ liệu không được tính là 0. Nếu bằng nhau, chọn giờ sớm hơn.</p>
-        <section class="week-heat" aria-labelledby="heat-title">
-          <h3 id="heat-title">Bản đồ nhiệt theo thứ và giờ</h3>
-          <p class="field-help">Mỗi ô là số lượt thuê trung bình trong một giờ theo bộ lọc hiện tại. Chọn ô để xem số liệu.</p>
-          <p id="heat-peak"></p>
-          <div class="heat-scroll"><table id="heat-grid" aria-labelledby="heat-title"></table></div>
-          <div class="heat-key">0 <span aria-hidden="true"></span> <b id="heat-max"></b> lượt/giờ · Ô gạch chéo: không có dữ liệu</div>
-          <p id="heat-detail" aria-live="polite"></p>
-        </section>
-        <details class="chart-panel"><summary>Xem bảng số liệu và số mẫu</summary><div class="hourly-table-wrap"><table><caption>Lượt thuê thực tế trung bình theo giờ sau khi lọc</caption><thead><tr><th>Giờ</th><th>Trung bình lượt thuê</th><th>Số bản ghi</th></tr></thead><tbody id="history-rows"></tbody></table></div></details>
       </div>
-    </section>
+
+      <section
+        class="quality-panel view-panel"
+        data-view="cao-diem"
+        hidden
+        aria-labelledby="peak-title"
+      >
+        <h2 id="peak-title">Giờ cao điểm</h2>
+        <p id="peak-status" class="field-help" role="status"
+          >Chọn “Tính dự đoán” để xem 3 khung giờ có lượt thuê ước tính cao
+          nhất.</p
+        >
+        <a href="#du-doan" class="peak-input-link">Đến phần nhập dự đoán</a>
+        <ol id="peak-list" class="peak-list" hidden></ol>
+        <p id="peak-note" class="field-help" hidden
+          >Xếp hạng theo dự đoán chưa làm tròn; nếu bằng nhau, ưu tiên giờ sớm
+          hơn. Giữ nguyên thời tiết đã nhập ở cả 24 giờ.</p
+        >
+      </section>
+      <section
+        class="quality-panel history-panel view-panel"
+        data-view="lich-su"
+        hidden
+        aria-labelledby="history-title"
+      >
+        <div class="panel-heading"
+          ><h2 id="history-title">Khám phá dữ liệu lịch sử</h2
+          ><span class="small-tag">SỐ LIỆU THỰC TẾ</span></div
+        >
+        <p class="field-help"
+          >Capital Bikeshare · 2011–2012 · Nguồn hour.csv. Thống kê dữ liệu đã
+          ghi nhận, không phải kết quả dự đoán.</p
+        >
+        <form id="history-form" class="history-filters">
+          <label
+            >Từ ngày<input
+              name="start"
+              type="date"
+              min="2011-01-01"
+              max="2012-12-31"
+              value="2011-01-01"
+              required
+          /></label>
+          <label
+            >Đến ngày<input
+              name="end"
+              type="date"
+              min="2011-01-01"
+              max="2012-12-31"
+              value="2012-12-31"
+              required
+          /></label>
+          <label
+            >Loại ngày<select name="workingday"
+              ><option value="all">Tất cả</option
+              ><option value="1">Ngày làm việc</option
+              ><option value="0">Ngày nghỉ / ngày lễ</option></select
+            ></label
+          >
+          <button class="primary-button" type="submit">Xem dữ liệu</button>
+        </form>
+        <p id="history-status" class="field-help" role="status"></p>
+        <div id="history-results" hidden>
+          <div class="history-metrics">
+            <div
+              ><span>Tổng lượt thuê</span><strong id="history-total"></strong
+            ></div>
+            <div
+              ><span>Trung bình / bản ghi giờ</span
+              ><strong id="history-average"></strong
+            ></div>
+            <div
+              ><span>Khách vãng lai (casual)</span
+              ><strong id="history-casual"></strong
+            ></div>
+            <div
+              ><span>Khách đăng ký (registered)</span
+              ><strong id="history-registered"></strong
+            ></div>
+          </div>
+          <p>Giờ có trung bình cao nhất: <strong id="history-peak"></strong></p>
+          <div id="history-chart" class="hourly-chart"></div>
+          <p class="field-help"
+            >Mỗi điểm = tổng lượt thuê ở giờ đó ÷ số bản ghi của giờ đó sau khi
+            lọc. Giờ thiếu dữ liệu không được tính là 0. Nếu bằng nhau, chọn giờ
+            sớm hơn.</p
+          >
+          <section class="week-heat" aria-labelledby="heat-title">
+            <h3 id="heat-title">Bản đồ nhiệt theo thứ và giờ</h3>
+            <p class="field-help"
+              >Mỗi ô là số lượt thuê trung bình trong một giờ theo bộ lọc hiện
+              tại. Chọn ô để xem số liệu.</p
+            >
+            <p id="heat-peak"></p>
+            <div class="heat-scroll"
+              ><table id="heat-grid" aria-labelledby="heat-title"></table
+            ></div>
+            <div class="heat-key"
+              >0 <span aria-hidden="true"></span> <b id="heat-max"></b> lượt/giờ
+              · Ô gạch chéo: không có dữ liệu</div
+            >
+            <p id="heat-detail" aria-live="polite"></p>
+          </section>
+          <details class="chart-panel"
+            ><summary>Xem bảng số liệu và số mẫu</summary
+            ><div class="hourly-table-wrap"
+              ><table
+                ><caption
+                  >Lượt thuê thực tế trung bình theo giờ sau khi lọc</caption
+                ><thead
+                  ><tr
+                    ><th>Giờ</th><th>Trung bình lượt thuê</th
+                    ><th>Số bản ghi</th></tr
+                  ></thead
+                ><tbody id="history-rows"></tbody></table></div
+          ></details>
+        </div>
+      </section>
       {% if show_rf_comparison %}
-      <section class="quality-panel history-panel chart-panel view-panel" data-view="doi-chieu" hidden aria-labelledby="rf-heading">
+      <section
+        class="quality-panel history-panel chart-panel view-panel"
+        data-view="doi-chieu"
+        hidden
+        aria-labelledby="rf-heading"
+      >
         <h2 id="rf-heading">Đối chiếu Random Forest với thực tế</h2>
-        <p class="field-help">Chọn một ngày trong tập kiểm tra để xem dự đoán đã lưu của Random Forest huấn luyện trên 85% dữ liệu. Giờ thiếu bản ghi được để trống.</p>
-        <label>Ngày trong tập kiểm tra <select id="rf-day" disabled></select></label>
+        <p class="field-help"
+          >Chọn một ngày trong tập kiểm tra để xem dự đoán đã lưu của Random
+          Forest huấn luyện trên 85% dữ liệu. Giờ thiếu bản ghi được để
+          trống.</p
+        >
+        <label
+          >Ngày trong tập kiểm tra
+          <select id="rf-day" disabled></select
+        ></label>
         <p id="rf-status" role="status"></p>
         <div id="rf-results" hidden>
-          <p><strong style="color:#106997">━ Thực tế</strong> · <strong style="color:#a84a10">┄ Random Forest</strong></p>
-          <div class="hourly-chart"><svg id="rf-chart" viewBox="0 0 720 250" role="img" aria-label="Lượt thuê thực tế và dự đoán của Random Forest theo giờ"></svg></div>
-          <details><summary>Xem số liệu từng giờ</summary><div class="hourly-table-wrap"><table><thead><tr><th>Giờ</th><th>Thực tế</th><th>Random Forest</th><th>Dự đoán trừ thực tế</th></tr></thead><tbody id="rf-rows"></tbody></table></div></details>
+          <p
+            ><strong style="color: #106997">━ Thực tế</strong> ·
+            <strong style="color: #a84a10">┄ Random Forest</strong></p
+          >
+          <div class="hourly-chart"
+            ><svg
+              id="rf-chart"
+              viewBox="0 0 720 250"
+              role="img"
+              aria-label="Lượt thuê thực tế và dự đoán của Random Forest theo giờ"
+            ></svg
+          ></div>
+          <details
+            ><summary>Xem số liệu từng giờ</summary
+            ><div class="hourly-table-wrap"
+              ><table
+                ><thead
+                  ><tr
+                    ><th>Giờ</th><th>Thực tế</th><th>Random Forest</th
+                    ><th>Dự đoán trừ thực tế</th></tr
+                  ></thead
+                ><tbody id="rf-rows"></tbody></table></div
+          ></details>
         </div>
       </section>
-      <script defer src="{{ url_for('static', filename='rf-comparison.js') }}"></script>
+      <script
+        defer
+        src="{{ url_for('static', filename='rf-comparison.js') }}"
+      ></script>
       {% endif %}
-    <footer><span>Bike Rental</span><a href="https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset" target="_blank" rel="noopener noreferrer">Nguồn dữ liệu: UCI Bike Sharing</a></footer>
-  </main>
-</body>
+      <footer
+        ><span>Bike Rental</span
+        ><a
+          href="https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Nguồn dữ liệu: UCI Bike Sharing</a
+        ></footer
+      >
+    </main>
+  </body>
 </html>

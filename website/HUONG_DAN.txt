@@ -1,11 +1,11 @@
 WEBSITE BIKE RENTAL — DỰ ĐOÁN LƯỢT THUÊ XE THEO GIỜ
 
 Website dùng Random Forest huấn luyện trên 85% dữ liệu theo thứ tự thời gian.
-models/model.joblib là bản triển khai của experiments/rf85/model.joblib.
+models/model.joblib là bản triển khai của training/random_forest/model.joblib.
 Trên 2.608 giờ kiểm tra, RF đạt MAE 54,67, RMSE 82,07 và R² 0,8544.
-HGB chỉ dùng trong thực nghiệm đối chứng. Xem experiments/rf85/comparison.csv.
+HGB chỉ dùng trong thực nghiệm đối chứng. Xem training/random_forest/comparison.csv.
 Chạy lại phép so sánh từ thư mục gốc:
-    website\.venv\Scripts\python.exe experiments/rf85/train_rf85.py
+    website\.venv\Scripts\python.exe training/random_forest/train.py
 
 CHẠY TRÊN WINDOWS
 Trong thư mục Bike-Sharing-phien-ban-2, nhấp đúp scripts\MO_WEBSITE.cmd.
@@ -68,16 +68,20 @@ app.py: Flask API, kiểm tra đầu vào, đổi đơn vị và gọi pipeline.
 templates/index.html: giao diện tiếng Việt.
 static/: kiểu dáng, tương tác, biểu tượng.
 models/: mô hình và thông tin huấn luyện Random Forest 85%.
+tests/: kiểm thử API, lịch sử dữ liệu và giao diện.
 GET /api/model: tình trạng và chỉ số mô hình.
 POST /api/predict: dự đoán từ ngày, giờ và điều kiện thời tiết.
 Model chỉ tải ở máy chủ, không gửi file joblib tới trình duyệt.
 
 KIỂM TRA
-    .\.venv\Scripts\python.exe test_app.py
+Chạy từ thư mục website để kiểm tra cả dự đoán và lịch sử dữ liệu:
+    .\.venv\Scripts\python.exe -B -m unittest discover -s tests -p "test_*.py"
+Kiểm tra giao diện (cần cài Playwright và khởi động website trước):
+    node tests/check_browser.cjs
 Kiểm tra dự đoán API với pipeline gốc, đầu vào thiếu/sai, ánh xạ ngày và mùa,
 cũng như đối chiếu RMSE/MAE/R² trên tập test với kết quả RF 85% đã lưu.
 Bài kiểm tra chỉ đối chiếu mô hình cố định, không chọn lại tham số bằng test.
-File CSV gốc để đối chiếu nằm tại ../du_lieu/goc/hour.csv so với thư mục website.
+File CSV gốc để đối chiếu nằm tại ../data/raw/hour.csv so với thư mục website.
 Nếu chỉ giải nén gói website riêng, kiểm tra đối chiếu CSV sẽ được bỏ qua khi thiếu file này.
 
 ĐƯA LÊN MẠNG
