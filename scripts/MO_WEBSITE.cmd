@@ -1,6 +1,6 @@
 @echo off
 setlocal
-cd /d "%~dp0"
+cd /d "%~dp0.." || exit /b 1
 title Velo - Du doan luot thue xe
 if not exist "website\.venv\Scripts\python.exe" (
     echo Chua co moi truong Python cua website.

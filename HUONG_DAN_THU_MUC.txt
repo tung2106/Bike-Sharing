@@ -1,6 +1,6 @@
 CẤU TRÚC DỰ ÁN TT_CSN
 
-MO_WEBSITE.cmd          Nhấp đúp để tự khởi động và mở website, không cần nhập link.
+scripts\MO_WEBSITE.cmd          Nhấp đúp để tự khởi động và mở website, không cần nhập link.
 
 du_lieu/
   goc/                  day.csv, hour.csv và Readme.txt gốc.
@@ -53,7 +53,7 @@ Tiền xử lý lại:
 Tạo lại notebook và gói Colab:
   python colab/build_colab_notebook.py
 Mở website:
-  Nhấp đúp MO_WEBSITE.cmd, hoặc chạy .\website\start.ps1.
+  Nhấp đúp scripts\MO_WEBSITE.cmd, hoặc chạy .\website\start.ps1.
   Trình duyệt tự mở. Giữ cửa sổ máy chủ mở khi sử dụng.
 Kiểm thử website:
   .\website\.venv\Scripts\python.exe -B website/test_app.py

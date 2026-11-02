@@ -16,7 +16,7 @@ Kết quả mới nằm trong experiments/hourly_v2/runs/<thời gian UTC>/.
 Các mô hình thử nghiệm kết hợp RF + HGB không thuộc phiên bản này.
 
 CHẠY TRÊN WINDOWS
-Trong thư mục TT_CSN, nhấp đúp MO_WEBSITE.cmd.
+Trong thư mục Bike-Sharing, nhấp đúp scripts\MO_WEBSITE.cmd.
 Chương trình tự khởi động máy chủ và mở giao diện trên trình duyệt mặc định.
 Không cần gõ hoặc lưu link, không mở trực tiếp templates/index.html.
 Giữ cửa sổ máy chủ mở khi dùng; nhấn Ctrl+C để dừng.

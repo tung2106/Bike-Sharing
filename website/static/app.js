@@ -1,3 +1,50 @@
+// One tooltip for the charts. Convert the pointer to SVG units before finding the nearest hour.
+const chartTip = document.createElement('div');
+chartTip.className = 'chart-tooltip';
+chartTip.hidden = true;
+document.body.append(chartTip);
+let activeGuide;
+function hideChartTip() {
+  chartTip.hidden = true;
+  if (activeGuide) activeGuide.setAttribute('visibility','hidden');
+}
+function showChartTip(event, text) {
+  chartTip.textContent = text;
+  chartTip.hidden = false;
+  const w = chartTip.offsetWidth, h = chartTip.offsetHeight;
+  const left = event.clientX + w + 18 < innerWidth ? event.clientX + 14 : event.clientX - w - 14;
+  chartTip.style.left = Math.max(6,left)+'px';
+  chartTip.style.top = Math.max(6,Math.min(innerHeight-h-6,event.clientY+12))+'px';
+}
+window.addEventListener('scroll',hideChartTip,true);
+window.addEventListener('hashchange',hideChartTip);
+window.addEventListener('resize',hideChartTip);
+function enableHourlyHover(svg,x,top,bottom,describe) {
+  const guide = document.createElementNS(svg.namespaceURI,'line');
+  for (const [k,v] of Object.entries({y1:top,y2:bottom,class:'chart-guide',visibility:'hidden'})) guide.setAttribute(k,v);
+  svg.append(guide);
+  // SVG hit testing only selects the painted data curves and their points.
+  for (const curve of svg.querySelectorAll('path, polyline')) {
+    curve.style.pointerEvents = 'stroke';
+  }
+  for (const title of svg.querySelectorAll('circle title')) title.remove();
+  function inspect(event) {
+    if (!event.target.matches('path, polyline, circle')) return hideChartTip();
+    const matrix = svg.getScreenCTM();
+    if (!matrix) return;
+    const point = new DOMPoint(event.clientX,event.clientY).matrixTransform(matrix.inverse());
+    if (point.x<x(0)-5 || point.x>x(23)+5 || point.y<top-5 || point.y>bottom+5) return hideChartTip();
+    const hour = Math.max(0,Math.min(23,Math.round((point.x-x(0))/(x(1)-x(0)))));
+    if (guide!==activeGuide) hideChartTip();
+    activeGuide=guide;
+    guide.setAttribute('x1',x(hour)); guide.setAttribute('x2',x(hour)); guide.setAttribute('visibility','visible');
+    showChartTip(event,String(hour).padStart(2,'0')+':00'+'\n'+describe(hour));
+  }
+  svg.onpointermove=inspect;
+  svg.onpointerdown=inspect;
+  svg.onpointerleave=hideChartTip;
+  svg.onpointercancel=hideChartTip;
+}
 const $ = (id) => document.getElementById(id);
 const form = $('prediction-form');
 const button = $('predict-button');
@@ -84,11 +131,12 @@ function renderHourlyChart(result) {
     title.textContent = `${String(point.hour).padStart(2, '0')}:00: ${numberFormat.format(point.rounded_prediction)} lượt thuê`;
     dot.append(title);
   }
+  enableHourlyHover(svg,x,top,height-bottom,h => 'Dự đoán: '+numberFormat.format(points[h].rounded_prediction)+' lượt thuê');
   $('hourly-chart').replaceChildren(svg);
   $('hourly-chart').hidden = false;
   $('hourly-details').hidden = false;
   const [year, month, day] = result.date.split('-');
-  $('chart-status').textContent = `${day}/${month}/${year} · Điểm nổi bật: ${String(result.hour).padStart(2, '0')}:00 · Di chuột vào điểm để xem số lượt.`;
+  $('chart-status').textContent = `${day}/${month}/${year} · Điểm nổi bật: ${String(result.hour).padStart(2, '0')}:00 · Di chuột trên biểu đồ để xem số lượt.`;
   $('hourly-caption').textContent = `Ước tính ngày ${day}/${month}/${year}`;
   $('hourly-rows').replaceChildren(...points.map(point => {
     const row = document.createElement('tr');

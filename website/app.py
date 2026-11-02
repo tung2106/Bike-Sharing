@@ -120,7 +120,9 @@ def create_app(model_path=None):
 
     @app.get('/')
     def index():
-        return render_template('index.html')
+        from sklearn.ensemble import RandomForestRegressor
+        is_rf = bundle is not None and isinstance(bundle['pipeline'].named_steps.get('model'), RandomForestRegressor)
+        return render_template('index.html', show_rf_comparison=is_rf)
 
     @app.get('/api/model')
     def model_info():
