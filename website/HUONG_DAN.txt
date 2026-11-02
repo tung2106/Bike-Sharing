@@ -1,21 +1,15 @@
 WEBSITE BIKE RENTAL — DỰ ĐOÁN LƯỢT THUÊ XE THEO GIỜ
 
-NHÁNH main: Random Forest huấn luyện lại trên 85% dữ liệu hour.csv.
-Mô hình mặc định: website/models/model.joblib.
-Train: 14.771 dòng đầu theo thời gian, đến 2012-09-12 15:00.
-Test: 2.608 dòng cuối, từ 2012-09-12 16:00 đến 2012-12-31 23:00.
-Giữ cấu hình RF gốc (100 cây), chỉ huấn luyện lại trên nhiều dữ liệu hơn.
-MAE: 54,6690; RMSE: 82,0730; R²: 0,85445.
-So sánh cùng tập test với HGB trong models/comparison.csv.
-Đây là tập test lịch sử đã được xem trước, chưa kiểm chứng triển khai thực tế.
-Nhánh phien-ban-2 dùng HistGradientBoosting và không bị thay đổi bởi cập nhật này.
-Mô hình RF 70% vẫn có trong lịch sử Git trước commit cập nhật.
-Nếu từng đặt BIKE_MODEL_PATH, hãy bỏ biến đó để dùng mô hình mặc định của main:
-    Remove-Item Env:BIKE_MODEL_PATH -ErrorAction SilentlyContinue
-Giao diện và chức năng khám phá dữ liệu lịch sử được giữ nguyên.
+Website dùng Random Forest huấn luyện trên 85% dữ liệu theo thứ tự thời gian.
+Bản main học trên 14.771 giờ đầu đến 15h ngày 12/09/2012, rồi được đánh giá trên 2.608 giờ cuối đến hết ngày 31/12/2012.
+models/model.joblib là bản triển khai của training/random_forest/model.joblib.
+Trên 2.608 giờ kiểm tra, RF đạt MAE 54,67, RMSE 82,07 và R² 0,8544.
+HGB chỉ dùng trong thực nghiệm đối chứng. Xem training/random_forest/comparison.csv.
+Chạy lại phép so sánh từ thư mục gốc:
+    website\.venv\Scripts\python.exe training/random_forest/train.py
 
 CHẠY TRÊN WINDOWS
-Trong thư mục TT_CSN, nhấp đúp MO_WEBSITE.cmd.
+Trong thư mục gốc của dự án, nhấp đúp scripts\MO_WEBSITE.cmd.
 Chương trình tự khởi động máy chủ và mở giao diện trên trình duyệt mặc định.
 Không cần gõ hoặc lưu link, không mở trực tiếp templates/index.html.
 Giữ cửa sổ máy chủ mở khi dùng; nhấn Ctrl+C để dừng.
@@ -74,22 +68,26 @@ KIẾN TRÚC
 app.py: Flask API, kiểm tra đầu vào, đổi đơn vị và gọi pipeline.predict().
 templates/index.html: giao diện tiếng Việt.
 static/: kiểu dáng, tương tác, biểu tượng.
-models/: mô hình và thông tin gốc từ Colab.
+models/: mô hình và thông tin huấn luyện Random Forest 85%.
+tests/: kiểm thử API, lịch sử dữ liệu và giao diện.
 GET /api/model: tình trạng và chỉ số mô hình.
 POST /api/predict: dự đoán từ ngày, giờ và điều kiện thời tiết.
 Model chỉ tải ở máy chủ, không gửi file joblib tới trình duyệt.
 
 KIỂM TRA
-    .\.venv\Scripts\python.exe test_app.py
+Chạy từ thư mục website để kiểm tra cả dự đoán và lịch sử dữ liệu:
+    .\.venv\Scripts\python.exe -B -m unittest discover -s tests -p "test_*.py"
+Kiểm tra giao diện (cần cài Playwright và khởi động website trước):
+    node tests/check_browser.cjs
 Kiểm tra dự đoán API với pipeline gốc, đầu vào thiếu/sai, ánh xạ ngày và mùa,
-cũng như đối chiếu RMSE/MAE/R² trên tập test với kết quả đã lưu ở Colab.
+cũng như đối chiếu RMSE/MAE/R² trên tập test với kết quả RF 85% đã lưu.
 Bài kiểm tra chỉ đối chiếu mô hình cố định, không chọn lại tham số bằng test.
-File CSV gốc để đối chiếu nằm tại ../du_lieu/goc/hour.csv so với thư mục website.
+File CSV gốc để đối chiếu nằm tại ../data/raw/hour.csv so với thư mục website.
 Nếu chỉ giải nén gói website riêng, kiểm tra đối chiếu CSV sẽ được bỏ qua khi thiếu file này.
 
 ĐƯA LÊN MẠNG
 Bản này chạy cục bộ. Có thể triển khai trên máy chủ hỗ trợ Python bằng Waitress:
-    waitress-serve --listen=0.0.0.0:8000 --call app:create_app
+    waitress-serve --listen=0.0.0.0:8001 --call app:create_app
 Cần cài requirements.txt và đưa kèm models/model.joblib.
 Chưa triển khai hoặc cấu hình tên miền trong lần xây dựng bản cục bộ này.
 

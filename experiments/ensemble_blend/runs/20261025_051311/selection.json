@@ -1,0 +1,15 @@
+{
+  "best_overall": {
+    "rf_weight": 0.0,
+    "RMSE": 75.9782677836928,
+    "MAE": 50.264090952023075,
+    "R2": 0.8646062678803155
+  },
+  "best_mixed": {
+    "rf_weight": 0.1,
+    "RMSE": 77.15192533437103,
+    "MAE": 51.37902328123604,
+    "R2": 0.8603910307489284
+  },
+  "export": "Best interior-weight blend for experimental comparison; not automatically the best overall model."
+}

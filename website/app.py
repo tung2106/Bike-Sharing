@@ -1,4 +1,5 @@
 """Website dự đoán Bike Sharing từ đúng bundle hour của Google Colab."""
+
 import hashlib
 import json
 import logging
@@ -14,10 +15,23 @@ import pandas as pd
 import sklearn
 from flask import Flask, jsonify, render_template, request
 from sklearn.exceptions import InconsistentVersionWarning
+from sklearn.ensemble import RandomForestRegressor
 
 ROOT = Path(__file__).resolve().parent
-FEATURES = ['temp', 'atemp', 'hum', 'windspeed', 'yr', 'holiday', 'workingday',
-            'season', 'mnth', 'weekday', 'weathersit', 'hr']
+FEATURES = [
+    'temp',
+    'atemp',
+    'hum',
+    'windspeed',
+    'yr',
+    'holiday',
+    'workingday',
+    'season',
+    'mnth',
+    'weekday',
+    'weathersit',
+    'hr',
+]
 
 
 def season_for(day):
@@ -57,51 +71,77 @@ def make_input(payload):
     except (ValueError, TypeError):
         raise ValueError('Vui lòng chọn ngày hợp lệ.') from None
     if day.year not in (2011, 2012):
-        raise ValueError('Mô hình hiện hỗ trợ bối cảnh năm 2011 hoặc 2012. Chọn ngày trong khoảng này.')
+        raise ValueError(
+            'Mô hình hiện hỗ trợ bối cảnh năm 2011 hoặc 2012. Chọn ngày trong khoảng này.'
+        )
     hour = read_number(payload, 'hour', 'giờ', 0, 23, integer=True)
     weather = read_number(payload, 'weather', 'mã thời tiết', 1, 4, integer=True)
     holiday = payload.get('holiday', False)
     if not isinstance(holiday, bool):
         raise ValueError('Ngày lễ phải là giá trị đúng/sai.')
     temp = read_number(payload, 'temperature', 'nhiệt độ (°C)', -8, 39, optional=True)
-    atemp = read_number(payload, 'feels_like', 'nhiệt độ cảm nhận (°C)', -16, 50, optional=True)
+    atemp = read_number(
+        payload, 'feels_like', 'nhiệt độ cảm nhận (°C)', -16, 50, optional=True
+    )
     humidity = read_number(payload, 'humidity', 'độ ẩm (%)', 0, 100, optional=True)
     wind = read_number(payload, 'wind_speed', 'tốc độ gió', 0, 67, optional=True)
     # UCI mô tả riêng thang giờ: temp=(t+8)/47, atemp=(t+16)/66.
     # Không dùng công thức cũ chia 41 / 50 của Readme.txt cho giao diện giờ.
-    row = {'temp': (temp + 8) / 47, 'atemp': (atemp + 16) / 66,
-           'hum': humidity / 100, 'windspeed': wind / 67,
-           'yr': day.year - 2011, 'holiday': int(holiday),
-           'workingday': int(day.weekday() < 5 and not holiday),
-           'season': season_for(day), 'mnth': day.month,
-           'weekday': (day.weekday() + 1) % 7, 'weathersit': weather, 'hr': hour}
+    row = {
+        'temp': (temp + 8) / 47,
+        'atemp': (atemp + 16) / 66,
+        'hum': humidity / 100,
+        'windspeed': wind / 67,
+        'yr': day.year - 2011,
+        'holiday': int(holiday),
+        'workingday': int(day.weekday() < 5 and not holiday),
+        'season': season_for(day),
+        'mnth': day.month,
+        'weekday': (day.weekday() + 1) % 7,
+        'weathersit': weather,
+        'hr': hour,
+    }
     return pd.DataFrame([row], columns=FEATURES), day
 
 
 def load_model(model_path):
     if not model_path.is_file():
-        raise RuntimeError('Chưa có file mô hình. Đặt model.joblib của hour vào thư mục models rồi khởi động lại.')
+        raise RuntimeError(
+            'Chưa có file mô hình. Đặt model.joblib của hour vào thư mục models rồi khởi động lại.'
+        )
     with warnings.catch_warnings():
         warnings.simplefilter('error', InconsistentVersionWarning)
         bundle = joblib.load(model_path)
     if not isinstance(bundle, dict) or bundle.get('dataset') != 'hour':
-        raise RuntimeError('File được chọn không phải mô hình hour đã xuất từ notebook.')
+        raise RuntimeError(
+            'File được chọn không phải mô hình hour đã xuất từ notebook.'
+        )
     if bundle.get('features') != FEATURES or bundle.get('target') != 'cnt':
         raise RuntimeError('Các cột của mô hình không khớp dữ liệu theo giờ.')
     trained = bundle.get('versions', {}).get('scikit-learn')
     if trained and trained != sklearn.__version__:
-        raise RuntimeError(f'Cần scikit-learn {trained}, hiện đang dùng {sklearn.__version__}.')
+        raise RuntimeError(
+            f'Cần scikit-learn {trained}, hiện đang dùng {sklearn.__version__}.'
+        )
     if not callable(getattr(bundle.get('pipeline'), 'predict', None)):
         raise RuntimeError('Bundle không có pipeline dự đoán hợp lệ.')
+    if not isinstance(
+        bundle['pipeline'].named_steps.get('model'), RandomForestRegressor
+    ):
+        raise RuntimeError('Website yêu cầu mô hình Random Forest theo giờ.')
     return bundle
 
 
 def create_app(model_path=None):
     app = Flask(__name__)
     from history import register_history
+
     register_history(app)
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024
-    path = Path(model_path or os.environ.get('BIKE_MODEL_PATH', ROOT / 'models' / 'model.joblib'))
+    path = Path(
+        model_path
+        or os.environ.get('BIKE_MODEL_PATH', ROOT / 'models' / 'model.joblib')
+    )
     bundle, load_error = None, None
     try:
         bundle = load_model(path)
@@ -120,20 +160,25 @@ def create_app(model_path=None):
 
     @app.get('/')
     def index():
-        return render_template('index.html')
+        return render_template('index.html', show_rf_comparison=bundle is not None)
 
     @app.get('/api/model')
     def model_info():
         if bundle is None:
             return jsonify(ready=False, error=load_error), 503
         report = bundle.get('report', {})
-        return jsonify(ready=True, name=bundle.get('name', 'Random Forest · theo giờ'), dataset='hour',
-                       evaluation_note=report.get('evaluation_note'),
-                       years=[2011, 2012], test=report.get('test', {}),
-                       baseline=report.get('baseline_test', {}),
-                       parameters=report.get('selection', {}).get('best_params', {}),
-                       evaluated_at=report.get('evaluated_at_utc'),
-                       model_sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+        return jsonify(
+            ready=True,
+            name=bundle.get('name', 'Random Forest · theo giờ'),
+            dataset='hour',
+            evaluation_note=report.get('evaluation_note'),
+            years=[2011, 2012],
+            test=report.get('test', {}),
+            baseline=report.get('baseline_test', {}),
+            parameters=report.get('selection', {}).get('best_params', {}),
+            evaluated_at=report.get('evaluated_at_utc'),
+            model_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+        )
 
     @app.post('/api/predict')
     def predict():
@@ -148,20 +193,42 @@ def create_app(model_path=None):
             hourly_frame = pd.concat([frame] * 24, ignore_index=True)
             hourly_frame['hr'] = range(24)
             values = np.asarray(bundle['pipeline'].predict(hourly_frame), dtype=float)
-            if values.shape != (24,) or not np.isfinite(values).all() or (values < 0).any():
+            if (
+                values.shape != (24,)
+                or not np.isfinite(values).all()
+                or (values < 0).any()
+            ):
                 raise ValueError('Giá trị dự đoán không hợp lệ')
             value = float(values[int(frame.iloc[0]['hr'])])
-            hourly = [{'hour': hour, 'prediction': float(count),
-                       'rounded_prediction': int(math.floor(count + 0.5))}
-                      for hour, count in enumerate(values)]
+            hourly = [
+                {
+                    'hour': hour,
+                    'prediction': float(count),
+                    'rounded_prediction': int(math.floor(count + 0.5)),
+                }
+                for hour, count in enumerate(values)
+            ]
             missing = [c for c in FEATURES if pd.isna(frame.iloc[0][c])]
-            return jsonify(prediction=value, rounded_prediction=int(math.floor(value + 0.5)),
-                           date=day.isoformat(), hour=int(frame.iloc[0]['hr']),
-                           imputed_features=missing, hourly=hourly,
-                           features={c: None if pd.isna(frame.iloc[0][c]) else float(frame.iloc[0][c]) for c in FEATURES})
+            return jsonify(
+                prediction=value,
+                rounded_prediction=int(math.floor(value + 0.5)),
+                date=day.isoformat(),
+                hour=int(frame.iloc[0]['hr']),
+                imputed_features=missing,
+                hourly=hourly,
+                features={
+                    c: None if pd.isna(frame.iloc[0][c]) else float(frame.iloc[0][c])
+                    for c in FEATURES
+                },
+            )
         except Exception:
             app.logger.exception('Prediction failed')
-            return jsonify(error='Không thể dự đoán. Vui lòng kiểm tra mô hình và thử lại.'), 500
+            return (
+                jsonify(
+                    error='Không thể dự đoán. Vui lòng kiểm tra mô hình và thử lại.'
+                ),
+                500,
+            )
 
     @app.errorhandler(413)
     def too_large(_):
@@ -172,5 +239,6 @@ def create_app(model_path=None):
 
 if __name__ == '__main__':
     from waitress import serve
-    print('Mở website tại http://127.0.0.1:8000', flush=True)
-    serve(create_app(), host='127.0.0.1', port=8000, threads=4)
+
+    print('Mở website tại http://127.0.0.1:8001', flush=True)
+    serve(create_app(), host='127.0.0.1', port=8001, threads=4)

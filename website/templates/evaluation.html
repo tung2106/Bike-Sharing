@@ -1,0 +1,99 @@
+{% macro score_choice(key, name, unit) %}
+<label class="eval-choice">
+  <span class="eval-choice-label">
+    <input type="radio" name="eval-metric" value="{{ key }}" />
+    {{ name }}
+  </span>
+  <span class="eval-score"
+    ><strong id="eval-score-{{ key }}">—</strong>{% if unit %}<small
+      >{{ unit }}</small
+    >{% endif %}</span
+  >
+</label>
+{% endmacro %}
+
+<section
+  class="view-panel quality-panel eval-panel"
+  data-view="danh-gia"
+  aria-labelledby="eval-heading"
+  hidden
+>
+  <div class="eval-head">
+    <div>
+      <h2 id="eval-heading">Kết quả kiểm tra</h2>
+      <p class="field-help" id="eval-status" role="status"></p>
+    </div>
+    <div id="eval-model-control" hidden>
+      <label for="eval-model">Mô hình đang xem</label>
+      <select id="eval-model"></select>
+    </div>
+  </div>
+  <button type="button" class="slot-button" id="eval-retry" disabled hidden>
+    Thử tải lại
+  </button>
+
+  <div id="eval-content" hidden>
+    <fieldset class="eval-choices">
+      <legend>Chọn chỉ số</legend>
+      <div>
+        {{ score_choice("mae", "MAE", "lượt/giờ") }} {{ score_choice("rmse",
+        "RMSE", "lượt/giờ") }} {{ score_choice("r2", "R²", "") }}
+      </div>
+    </fieldset>
+    <div class="eval-insights">
+      <figure class="eval-comparison" aria-labelledby="eval-chart-title">
+        <figcaption>
+          <h3 id="eval-chart-title"></h3>
+          <span class="small-tag" id="eval-direction"></span>
+        </figcaption>
+        <p class="eval-meaning" id="eval-meaning"></p>
+        <div class="eval-bars" id="eval-model-bars"></div>
+      </figure>
+      <section class="eval-example" aria-labelledby="eval-example-title">
+        <h3 id="eval-example-title"></h3>
+        <div class="eval-pickers" id="eval-time-pickers">
+          <div>
+            <label for="eval-date">Ngày</label
+            ><select id="eval-date"></select>
+          </div>
+          <div>
+            <label for="eval-hour">Giờ</label
+            ><select id="eval-hour"></select>
+          </div>
+        </div>
+        <div class="eval-bars" id="eval-example-bars"></div>
+        <div class="eval-squares" id="eval-rmse-squares" hidden></div>
+        <p class="eval-takeaway" id="eval-takeaway" role="status"></p>
+      </section>
+    </div>
+    <details class="eval-calculation" id="eval-calculation">
+      <summary id="eval-calculation-label">Xem cách tính</summary>
+      <p id="eval-rule"></p>
+      <p id="eval-term"></p>
+      <p class="eval-equation" id="eval-total"></p>
+      <p class="eval-source">
+        Hai bản Random Forest dùng cùng cấu hình, huấn luyện trên 70% và 85% dữ
+        liệu đầu. HistGradientBoosting dùng cùng 85% để đối chứng.
+        <a
+          href="https://scikit-learn.org/stable/modules/model_evaluation.html#regression-metrics"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Nguồn công thức: scikit-learn</a
+        >.
+      </p>
+    </details>
+  </div>
+  <template id="eval-bar-template">
+    <div class="eval-bar">
+      <div class="eval-bar-value"><span></span><strong></strong></div>
+      <div class="eval-track" aria-hidden="true"><i></i></div>
+    </div>
+  </template>
+  <template id="eval-square-template">
+    <div class="eval-square-cell">
+      <span class="eval-square-hour"></span>
+      <span class="eval-square-plot" aria-hidden="true"><i></i></span>
+      <strong class="eval-square-side"></strong>
+    </div>
+  </template>
+</section>
