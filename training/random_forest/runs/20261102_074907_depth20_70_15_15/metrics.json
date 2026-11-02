@@ -1,0 +1,81 @@
+{
+  "train": {
+    "RMSE": 29.72921917319072,
+    "MAE": 19.47353809455168,
+    "R2": 0.9620326267409512
+  },
+  "validation": {
+    "RMSE": 125.74188996188228,
+    "MAE": 88.16570916183234,
+    "R2": 0.6827183225629723
+  },
+  "test": {
+    "RMSE": 93.85817742329282,
+    "MAE": 64.77623386648517,
+    "R2": 0.8096484349075835
+  },
+  "baseline_test": {
+    "RMSE": 90.1641035755342,
+    "MAE": 61.35637480828221,
+    "R2": 0.8243372986215161
+  },
+  "control_unlimited_same_train": {
+    "train": {
+      "RMSE": 16.601764441125386,
+      "MAE": 10.2595358405261,
+      "R2": 0.988159990761778
+    },
+    "validation": {
+      "RMSE": 126.37997220296579,
+      "MAE": 87.75400677922742,
+      "R2": 0.6794900351762299
+    },
+    "test": {
+      "RMSE": 90.1641035755342,
+      "MAE": 61.35637480828221,
+      "R2": 0.8243372986215161
+    }
+  },
+  "split": {
+    "train": {
+      "rows": 12165,
+      "start": "2011-01-01 00:00:00",
+      "end": "2012-05-27 01:00:00"
+    },
+    "validation": {
+      "rows": 2606,
+      "start": "2012-05-27 02:00:00",
+      "end": "2012-09-12 15:00:00"
+    },
+    "test": {
+      "rows": 2608,
+      "start": "2012-09-12 16:00:00",
+      "end": "2012-12-31 23:00:00"
+    }
+  },
+  "evaluated_at_utc": "2026-11-02T07:49:07.984129+00:00",
+  "selection": {
+    "best_params": {
+      "bootstrap": true,
+      "ccp_alpha": 0.0,
+      "criterion": "squared_error",
+      "max_depth": 20,
+      "max_features": 1.0,
+      "max_leaf_nodes": null,
+      "max_samples": null,
+      "min_impurity_decrease": 0.0,
+      "min_samples_leaf": 1,
+      "min_samples_split": 2,
+      "min_weight_fraction_leaf": 0.0,
+      "monotonic_cst": null,
+      "n_estimators": 100,
+      "n_jobs": 4,
+      "oob_score": false,
+      "random_state": 42,
+      "verbose": 0,
+      "warm_start": false
+    },
+    "policy": "User chose depth 20 after validation comparison; fit only on first 70%. No test-based selection or refit on validation."
+  },
+  "evaluation_note": "Historical test previously viewed in this project; not a new independent holdout. Unlimited control uses the identical 70% training split."
+}

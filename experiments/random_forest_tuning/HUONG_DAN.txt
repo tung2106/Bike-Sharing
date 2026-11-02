@@ -1,0 +1,63 @@
+﻿SO SÁNH MAX_DEPTH VÀ MIN_SAMPLES_LEAF — RANDOM FOREST
+
+Mã chạy: experiments/random_forest_tuning/tune_depth.py
+Lệnh từ thư mục gốc:
+  .\website\.venv\Scripts\python.exe -B experiments/random_forest_tuning/tune_depth.py
+
+PHƯƠNG PHÁP
+- 45 cấu hình: max_depth = 4, 8, 10, 12, 16, 20, 24, 32, None;
+  min_samples_leaf = 1, 2, 3, 5, 10.
+- 100 cây, random_state=42; các tham số còn lại giữ như mô hình website.
+- Train: 12.165 dòng đầu (70%), đến 2012-05-27 01:00.
+- Validation: 2.606 dòng tiếp theo (15%), đến 2012-09-12 15:00.
+- 2.608 dòng test cuối không được dùng để dự đoán hoặc chọn cấu hình.
+- Tiền xử lý được clone, fit lại chỉ trên train; không dùng trạng thái đã học
+  của mô hình triển khai. Mọi ứng viên, kể cả None/1, đều học trên cùng train.
+- Chọn min_samples_leaf cho từng độ sâu bằng RMSE validation nhỏ nhất.
+- Chọn cấu hình thắng toàn bộ bằng cùng tiêu chí, không dùng sai số train để chọn.
+
+FILE KẾT QUẢ
+  runs/20261102_074327/all_results.csv: đủ 45 cấu hình.
+  runs/20261102_074327/best_by_depth.csv: cấu hình tốt nhất cho từng độ sâu.
+  runs/20261102_074327/ranking.csv: thứ hạng theo RMSE validation.
+  runs/20261102_074327/best_validation_predictions.csv: dự đoán của cấu hình thắng.
+  runs/20261102_074327/plan.json: chia dữ liệu, tham số, phiên bản và SHA-256.
+  runs/20261102_074327/selection.json: cấu hình thắng và đối chiếu baseline.
+
+KẾT QUẢ (RMSE CÀNG THẤP CÀNG TỐT)
+max_depth  min_samples_leaf  Train RMSE  Validation RMSE  Validation R2
+4          5                107,974     175,318          0,3832
+8          1                 79,699     153,606          0,5265
+10         1                 66,861     144,891          0,5787
+12         1                 56,028     136,708          0,6250
+16         1                 40,557     128,348          0,6694
+20         1                 29,729     125,742          0,6827
+24         1                 21,774     126,694          0,6779
+32         1                 16,860     125,706          0,6829
+None       1                 16,602     126,380          0,6795
+
+ĐÁNH GIÁ
+- 4: mô hình quá đơn giản, sai số cả train và validation cao.
+- 8, 10, 12: tăng độ sâu cải thiện validation rõ rệt, nhưng vẫn kém nhóm 16 trở lên.
+- 16: validation gần nhóm tốt nhất, cây đơn giản hơn; RMSE cao hơn độ sâu 32 khoảng 2,10%.
+- 20: gần như ngang 32, chỉ chênh 0,0355 RMSE (0,0282%). Trung bình khoảng
+  3.657 lá/cây, trong khi độ sâu 32 có khoảng 6.818 lá/cây. Đây là phương án
+  cân bằng độ phức tạp và sai số nếu ưu tiên mô hình gọn hơn.
+- 24: train tốt hơn 20 nhưng validation kém hơn, không phải lựa chọn thắng.
+- 32: thắng theo tiêu chí RMSE validation đã đặt trước, min_samples_leaf=1.
+- None: train tốt nhất nhưng validation kém 32; độ sâu thực tế trung bình 42,54.
+- Tăng min_samples_leaf không cải thiện validation ở các độ sâu từ 8 trở lên
+  trong lưới đã thử. Không nên kết luận tăng leaf luôn giảm được sai số ngoài mẫu.
+
+KẾT LUẬN
+Cấu hình thắng trên validation: max_depth=32, min_samples_leaf=1, n_estimators=100.
+RMSE validation giảm 0,533% so với None/1 trên cùng cách chia train/validation.
+Nếu ưu tiên đơn giản hóa, max_depth=20, min_samples_leaf=1 là lựa chọn gần tương đương.
+Chênh lệch rất nhỏ chưa đủ chứng minh 32 tốt hơn 20 một cách ổn định.
+
+Khoảng cách train-validation vẫn lớn; chưa thể nói đã giải quyết overfitting.
+Chênh lệch còn có thể chịu ảnh hưởng thay đổi theo thời gian/mùa. Không so trực tiếp
+RMSE validation lần này với RMSE test 82,07 trước đây vì khác tập và lượng dữ liệu train.
+Đây là một giai đoạn validation và một seed, không phải kiểm chứng độc lập nhiều lần.
+Test lịch sử đã từng được xem trong các thực nghiệm trước của dự án.
+Chưa thay mô hình website, chưa refit cấu hình mới trên 85%, chưa push GitHub.
