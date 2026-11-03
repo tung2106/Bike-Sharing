@@ -16,9 +16,11 @@ Kiểm lại mô hình đã lưu, dự đoán 24 giờ, biểu đồ đánh giá
   website\.venv\Scripts\python.exe -B experiments/rf85_previous_day/verify.py experiments/rf85_previous_day/runs/20261102T154526002202Z
 
 Mở bản thử nghiệm
+  Nhấp đúp scripts\MO_WEBSITE.cmd để mở bản RF có lượt ngày trước ở cổng 8002.
+  Hoặc khởi động máy chủ thủ công từ thư mục gốc:
   website\.venv\Scripts\python.exe -B experiments/hourly_comparison/serve_v2.py --run experiments/rf85_previous_day/runs/20261102T154526002202Z --port 8002
   Sau khi khởi động, truy cập http://127.0.0.1:8002/#danh-gia.
-  Bản RF85 gốc dùng scripts/MO_WEBSITE.cmd và cổng 8001.
+  Mở website\start.ps1 bằng PowerShell để xem RF85 gốc ở cổng 8001.
 
 Đọc kết quả trong thư mục lần chạy
   model.joblib               Pipeline tiền xử lý và rừng đã huấn luyện.

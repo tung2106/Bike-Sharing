@@ -9,7 +9,7 @@ Chạy lại phép so sánh từ thư mục gốc:
     website\.venv\Scripts\python.exe training/random_forest/train.py
 
 CHẠY TRÊN WINDOWS
-Trong thư mục gốc của dự án, nhấp đúp scripts\MO_WEBSITE.cmd.
+Trong thư mục Bike-Sharing-phien-ban-2, nhấp đúp scripts\MO_WEBSITE.cmd để mở bản RF có lượt ngày trước ở http://127.0.0.1:8002/. Bản demo này có MAE 53,10 lượt/giờ.
 Chương trình tự khởi động máy chủ và mở giao diện trên trình duyệt mặc định.
 Không cần gõ hoặc lưu link, không mở trực tiếp templates/index.html.
 Giữ cửa sổ máy chủ mở khi dùng; nhấn Ctrl+C để dừng.
@@ -21,7 +21,7 @@ Cách khởi động khác:
 Mở PowerShell trong thư mục website:
     .\setup.ps1
     .\start.ps1
-start.ps1 cũng tự mở giao diện trong trình duyệt.
+start.ps1 mở bản RF85 gốc để đối chiếu ở http://127.0.0.1:8001/. Bản gốc có MAE 54,67 lượt/giờ.
 Yêu cầu Python 3.12 hoặc 3.13. Cài đặt thư viện chỉ cần lần đầu.
 Nếu máy chặn file PowerShell, dùng trực tiếp:
     python -m venv .venv

@@ -42,8 +42,8 @@ THƯ MỤC CHÍNH
       sources/                    Bảng tính nguồn của biên bản.
 
 CHẠY WEBSITE
-  Nhấp đúp scripts\MO_WEBSITE.cmd.
-  Hoặc từ thư mục gốc: .\website\start.ps1
+  Nhấp đúp scripts\MO_WEBSITE.cmd để mở RF có lượt ngày trước ở cổng 8002.
+  Để mở RF85 gốc ở cổng 8001, chạy .\website\start.ps1 từ thư mục gốc.
   Cài môi trường nếu chưa có: .\website\setup.ps1
 
 KIỂM THỬ (TỪ THƯ MỤC GỐC)
