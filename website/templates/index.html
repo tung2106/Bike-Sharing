@@ -101,7 +101,7 @@
             <path d="M4 3v18h17M8 16v-5m5 5V6m5 10v-8" /></svg
           ><span>Khám phá lịch sử</span></a
         >
-        {% if show_rf_comparison %}<a href="#doi-chieu"
+        {% if show_model_comparison %}<a href="#doi-chieu"
           ><svg
             viewBox="0 0 24 24"
             fill="none"
@@ -261,7 +261,7 @@
           ><span>Đọc bản đồ nhiệt và tìm hiểu từng khung giờ.</span
           ><b aria-hidden="true">↗</b></a
         >
-        {% if show_rf_comparison %}<a href="#doi-chieu"
+        {% if show_model_comparison %}<a href="#doi-chieu"
           ><span class="route-icon"
             ><svg
               viewBox="0 0 24 24"
@@ -735,17 +735,17 @@
           </details>
         </div>
       </section>
-      {% if show_rf_comparison %}
+      {% if show_model_comparison %}
       <section
         class="quality-panel history-panel chart-panel view-panel"
         data-view="doi-chieu"
         hidden
         aria-labelledby="rf-heading"
       >
-        <h2 id="rf-heading">Đối chiếu Random Forest với thực tế</h2>
+        <h2 id="rf-heading">Đối chiếu {{ model_label }} với thực tế</h2>
         <p class="field-help">
-          Chọn một ngày trong tập kiểm tra để xem dự đoán đã lưu của Random
-          Forest huấn luyện trên 85% dữ liệu. Giờ thiếu bản ghi được để trống.
+          Chọn ngày kiểm tra để xem số lượt thuê theo giờ. Giờ thiếu bản ghi
+          được để trống.
         </p>
         <label
           >Ngày trong tập kiểm tra
@@ -755,14 +755,15 @@
         <div id="rf-results" hidden>
           <p>
             <strong style="color: #106997">━ Thực tế</strong> ·
-            <strong style="color: #a84a10">┄ Random Forest</strong>
+            <strong style="color: #a84a10">┄ {{ model_label }}</strong>
           </p>
           <div class="hourly-chart">
             <svg
               id="rf-chart"
+              data-model-label="{{ model_label }}"
               viewBox="0 0 720 250"
               role="img"
-              aria-label="Lượt thuê thực tế và dự đoán của Random Forest theo giờ"
+              aria-label="Lượt thuê thực tế và dự đoán của {{ model_label }} theo giờ"
             ></svg>
           </div>
           <details>
@@ -773,7 +774,7 @@
                   <tr>
                     <th>Giờ</th>
                     <th>Thực tế</th>
-                    <th>Random Forest</th>
+                    <th>{{ model_label }}</th>
                     <th>Dự đoán trừ thực tế</th>
                   </tr>
                 </thead>

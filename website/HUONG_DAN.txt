@@ -1,15 +1,17 @@
 WEBSITE BIKE RENTAL — DỰ ĐOÁN LƯỢT THUÊ XE THEO GIỜ
 
-Website dùng Random Forest huấn luyện trên 85% dữ liệu theo thứ tự thời gian.
-Bản main học trên 14.771 giờ đầu đến 15h ngày 12/09/2012, rồi được đánh giá trên 2.608 giờ cuối đến hết ngày 31/12/2012.
-models/model.joblib là bản triển khai của training/random_forest/model.joblib.
+Demo cổng 8002 dùng HistGradientBoosting 400 vòng, huấn luyện trên 85% dữ liệu theo thứ tự thời gian.
+Mục Đánh giá mô hình so sánh HGB với các bản Random Forest từ kết quả kiểm tra đã lưu.
+Mô hình HGB học trên 14.771 giờ đầu đến 15h ngày 12/09/2012, rồi được đánh giá trên 2.608 giờ cuối đến hết ngày 31/12/2012.
+models/model.joblib lưu RF85 đối chiếu; model_config.py chỉ định lần chạy HGB dùng mặc định.
 Trên 2.608 giờ kiểm tra, RF đạt MAE 54,67, RMSE 82,07 và R² 0,8544.
-HGB chỉ dùng trong thực nghiệm đối chứng. Xem training/random_forest/comparison.csv.
-Chạy lại phép so sánh từ thư mục gốc:
-    website\.venv\Scripts\python.exe training/random_forest/train.py
+HGB đạt MAE 40,58, RMSE 63,79 và R² 0,9121 trên cùng 2.608 giờ.
+Xem experiments/hourly_comparison/HUONG_DAN_THU_NGHIEM.txt để tái lập kết quả.
+Chạy lại thí nghiệm số vòng HGB từ thư mục gốc:
+    .\website\.venv\Scripts\python.exe -B experiments\hourly_comparison\train_hgb_rounds.py
 
 CHẠY TRÊN WINDOWS
-Trong thư mục gốc của dự án, nhấp đúp scripts\MO_WEBSITE.cmd.
+Trong thư mục dự án, nhấp đúp scripts\MO_WEBSITE.cmd để mở bản HistGradientBoosting ở http://127.0.0.1:8002/.
 Chương trình tự khởi động máy chủ và mở giao diện trên trình duyệt mặc định.
 Không cần gõ hoặc lưu link, không mở trực tiếp templates/index.html.
 Giữ cửa sổ máy chủ mở khi dùng; nhấn Ctrl+C để dừng.
@@ -21,7 +23,7 @@ Cách khởi động khác:
 Mở PowerShell trong thư mục website:
     .\setup.ps1
     .\start.ps1
-start.ps1 cũng tự mở giao diện trong trình duyệt.
+start.ps1 mở HGB ở http://127.0.0.1:8002/.
 Yêu cầu Python 3.12 hoặc 3.13. Cài đặt thư viện chỉ cần lần đầu.
 Nếu máy chặn file PowerShell, dùng trực tiếp:
     python -m venv .venv
@@ -57,12 +59,11 @@ Không dùng công thức chia 41 và chia 50 trong Readme cũ cho dữ liệu g
 Đối chiếu: https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset
 
 TƯƠNG THÍCH MÔ HÌNH
-Phiên bản train được ghi trong models/environment.json.
-requirements.txt cố định các phiên bản numpy, pandas, scikit-learn và joblib đó.
-Colab dùng Python 3.13; bản website được kiểm thử trên Python 3.12 với cùng
-các phiên bản thư viện của mô hình. Không nâng scikit-learn tùy ý khi tải model.
-models/metrics.json lưu kết quả test để đối chiếu, giao diện đọc chỉ số trực tiếp
-từ bundle mô hình. Không coi MAE là khoảng tin cậy cho mỗi dự đoán.
+HGB được huấn luyện trên máy với Python 3.12 trong website/.venv.
+requirements.txt cố định các phiên bản numpy, pandas, scikit-learn và joblib.
+Gói HGB và các tệp kết quả nằm trong experiments/hourly_comparison/runs/.
+Giao diện đọc chỉ số trực tiếp từ bundle và các dự đoán kiểm tra đã lưu.
+MAE là sai số trung bình trên tập kiểm tra.
 
 KIẾN TRÚC
 app.py: Flask API, kiểm tra đầu vào, đổi đơn vị và gọi pipeline.predict().
@@ -80,15 +81,15 @@ Chạy từ thư mục website để kiểm tra cả dự đoán và lịch sử
 Kiểm tra giao diện (cần cài Playwright và khởi động website trước):
     node tests/check_browser.cjs
 Kiểm tra dự đoán API với pipeline gốc, đầu vào thiếu/sai, ánh xạ ngày và mùa,
-cũng như đối chiếu RMSE/MAE/R² trên tập test với kết quả RF 85% đã lưu.
+cũng như đối chiếu RMSE/MAE/R² trên tập test với kết quả HGB đã lưu.
 Bài kiểm tra chỉ đối chiếu mô hình cố định, không chọn lại tham số bằng test.
 File CSV gốc để đối chiếu nằm tại ../data/raw/hour.csv so với thư mục website.
 Nếu chỉ giải nén gói website riêng, kiểm tra đối chiếu CSV sẽ được bỏ qua khi thiếu file này.
 
 ĐƯA LÊN MẠNG
 Bản này chạy cục bộ. Có thể triển khai trên máy chủ hỗ trợ Python bằng Waitress:
-    waitress-serve --listen=0.0.0.0:8001 --call app:create_app
-Cần cài requirements.txt và đưa kèm models/model.joblib.
+    waitress-serve --listen=0.0.0.0:8002 --call app:create_app
+Cần cài requirements.txt và giữ dữ liệu gốc cùng các tệp kết quả kiểm tra của HGB và Random Forest trong experiments/.
 Chưa triển khai hoặc cấu hình tên miền trong lần xây dựng bản cục bộ này.
 
 Dữ liệu: Hadi Fanaee-T, Bike Sharing, UCI Machine Learning Repository (2013).

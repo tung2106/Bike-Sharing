@@ -30,16 +30,21 @@ class EvaluationTests(unittest.TestCase):
         cut = len(raw) * 70 // 100 + len(raw) * 15 // 100
         test = raw.iloc[cut:]
         stamps = pd.to_datetime(test.dteday) + pd.to_timedelta(test.hr, unit='h')
-        rows = pd.DataFrame([
-            dict(stamp=pd.Timestamp(day) + pd.Timedelta(hours=row['hour']), **row)
-            for day, hours in report['days'].items() for row in hours
-        ])
+        rows = pd.DataFrame(
+            [
+                dict(stamp=pd.Timestamp(day) + pd.Timedelta(hours=row['hour']), **row)
+                for day, hours in report['days'].items()
+                for row in hours
+            ]
+        )
         self.assertEqual(report['count'], len(test))
         self.assertEqual(rows.stamp.tolist(), stamps.tolist())
         np.testing.assert_array_equal(rows.actual, test.cnt)
 
         archive = pd.read_csv(TEST_CSV)
-        published = json.loads(TEST_CSV.with_name('metrics.json').read_text(encoding='utf-8'))
+        published = json.loads(
+            TEST_CSV.with_name('metrics.json').read_text(encoding='utf-8')
+        )
         scores = {item['model']: item for item in published['comparison']}
         displayed = {item['key']: item for item in report['models']}
         columns = {
@@ -50,9 +55,13 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(set(displayed), set(columns))
         for key, column in columns.items():
             with self.subTest(model=key):
-                np.testing.assert_allclose(rows[key], archive[column], rtol=0, atol=1e-10)
+                np.testing.assert_allclose(
+                    rows[key], archive[column], rtol=0, atol=1e-10
+                )
                 for metric in ['MAE', 'RMSE', 'R2']:
-                    self.assertAlmostEqual(displayed[key][metric.lower()], scores[column][metric], places=9)
+                    self.assertAlmostEqual(
+                        displayed[key][metric.lower()], scores[column][metric], places=9
+                    )
 
     def test_worked_example_keeps_fractions_and_uses_the_test_mean(self):
         # Mean actual = 12, baseline sum of squares = 8.
@@ -62,14 +71,19 @@ class EvaluationTests(unittest.TestCase):
             csv.write_text(
                 'timestamp,cnt,original_saved_70,original_refit_85,selected_refit_85\n'
                 '2012-09-12 16:00:00,10,0,12.5,10\n'
-                '2012-09-12 19:00:00,14,0,13.5,14\n', encoding='utf-8',
+                '2012-09-12 19:00:00,14,0,13.5,14\n',
+                encoding='utf-8',
             )
             with patch('evaluation.TEST_CSV', csv):
                 report = self.client.get('/api/evaluation').json
         models = {m['key']: m for m in report['models']}
-        self.assertEqual([row['hour'] for row in report['days']['2012-09-12']], [16, 19])
+        self.assertEqual(
+            [row['hour'] for row in report['days']['2012-09-12']], [16, 19]
+        )
         self.assertEqual((report['actual_mean'], report['baseline_squares']), (12, 8))
-        self.assertEqual((models['rf85']['absolute_sum'], models['rf85']['squared_sum']), (3, 6.5))
+        self.assertEqual(
+            (models['rf85']['absolute_sum'], models['rf85']['squared_sum']), (3, 6.5)
+        )
         self.assertEqual(models['rf85']['mae'], 1.5)
         self.assertAlmostEqual(models['rf85']['rmse'], math.sqrt(3.25))
         self.assertEqual(models['rf85']['r2'], 0.1875)
@@ -85,5 +99,9 @@ class EvaluationTests(unittest.TestCase):
             )
             with patch('evaluation.TEST_CSV', csv):
                 with self.assertLogs(self.app.logger, level='ERROR'):
-                    self.assertEqual(self.client.get('/api/evaluation').status_code, 503)
-                self.assertEqual(self.client.get('/api/history/rf-test').status_code, 200)
+                    self.assertEqual(
+                        self.client.get('/api/evaluation').status_code, 503
+                    )
+                self.assertEqual(
+                    self.client.get('/api/history/rf-test').status_code, 200
+                )

@@ -1,0 +1,99 @@
+{
+  "test": {
+    "MAE": 40.577688896867045,
+    "RMSE": 63.79291816946025,
+    "R2": 0.912065933607608
+  },
+  "baseline_test": {
+    "MAE": 61.35637480828221,
+    "RMSE": 90.1641035755342,
+    "R2": 0.8243372986215161
+  },
+  "comparison": {
+    "HGB 400 (reference)": {
+      "MAE": 40.577688896867045,
+      "RMSE": 63.79291816946026,
+      "R2": 0.912065933607608
+    },
+    "HGB 400 (selected)": {
+      "MAE": 40.577688896867045,
+      "RMSE": 63.79291816946025,
+      "R2": 0.912065933607608
+    }
+  },
+  "selection": {
+    "candidate": "hist_boost_poisson",
+    "algorithm": "HistGradientBoostingRegressor",
+    "candidate_rounds": [
+      100,
+      200,
+      300,
+      400,
+      600
+    ],
+    "selected_rounds": 400,
+    "best_params": {
+      "categorical_features": null,
+      "early_stopping": false,
+      "interaction_cst": null,
+      "l2_regularization": 5,
+      "learning_rate": 0.06,
+      "loss": "poisson",
+      "max_bins": 255,
+      "max_depth": null,
+      "max_features": 1.0,
+      "max_iter": 400,
+      "max_leaf_nodes": 31,
+      "min_samples_leaf": 20,
+      "monotonic_cst": null,
+      "n_iter_no_change": 10,
+      "quantile": null,
+      "random_state": 42,
+      "scoring": "loss",
+      "tol": 1e-07,
+      "validation_fraction": 0.1,
+      "verbose": 0,
+      "warm_start": false
+    },
+    "selection_metric": "Minimum pooled validation MAE; fewer rounds break ties",
+    "validation": {
+      "rounds": 400.0,
+      "fold_1_MAE": 60.58501830971068,
+      "fold_2_MAE": 54.45847694579679,
+      "fold_3_MAE": 40.58350207833168,
+      "pooled_MAE": 50.264090952023075
+    },
+    "folds": [
+      {
+        "train_rows": 8689,
+        "validation_rows": 1738,
+        "train_end": "2012-01-02 20:00:00",
+        "validation_start": "2012-01-02 21:00:00",
+        "validation_end": "2012-03-15 13:00:00"
+      },
+      {
+        "train_rows": 10427,
+        "validation_rows": 1738,
+        "train_end": "2012-03-15 13:00:00",
+        "validation_start": "2012-03-15 14:00:00",
+        "validation_end": "2012-05-27 01:00:00"
+      },
+      {
+        "train_rows": 12165,
+        "validation_rows": 2606,
+        "train_end": "2012-05-27 01:00:00",
+        "validation_start": "2012-05-27 02:00:00",
+        "validation_end": "2012-09-12 15:00:00"
+      }
+    ]
+  },
+  "split": {
+    "train_rows": 14771,
+    "test_rows": 2608,
+    "test_start": "2012-09-12 16:00:00",
+    "test_end": "2012-12-31 23:00:00"
+  },
+  "previous_day_comparison": true,
+  "evaluation_note": "Previously viewed historical test; exploratory, not independent final evidence.",
+  "evaluated_at_utc": "2026-11-11T16:08:20+00:00"
+}

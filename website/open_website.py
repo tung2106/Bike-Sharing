@@ -1,75 +1,87 @@
 """Open the local website with one double-click, reusing an existing server."""
 
-import json
+import argparse
 import hashlib
-import os
+import json
 import socket
 import subprocess
 import sys
 import time
-import urllib.error
 import urllib.request
 import webbrowser
-from pathlib import Path
+from model_config import (
+    HGB_MODEL_PATH,
+    HGB_PORT,
+    WEBSITE_DIR,
+)
 
-BASE_URL = 'http://127.0.0.1:8001'
-ROOT = Path(__file__).resolve().parent
 HTTP = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
-def website_ready():
+def website_ready(base_url, model_hash):
     try:
-        with HTTP.open(BASE_URL + '/api/model', timeout=2) as response:
+        with HTTP.open(base_url + '/api/model', timeout=2) as response:
             info = json.load(response)
         return (
             info.get('ready') is True
             and info.get('dataset') == 'hour'
-            and info.get('model_sha256')
-            == hashlib.sha256(
-                Path(
-                    os.environ.get('BIKE_MODEL_PATH', ROOT / 'models/model.joblib')
-                ).read_bytes()
-            ).hexdigest()
+            and info.get('model_sha256') == model_hash
         )
     except (OSError, ValueError, TypeError, AttributeError):
         return False
 
 
-def port_in_use():
+def port_in_use(port):
     with socket.socket() as connection:
         connection.settimeout(1)
-        return connection.connect_ex(('127.0.0.1', 8001)) == 0
+        return connection.connect_ex(('127.0.0.1', port)) == 0
 
 
-def open_browser():
-    if not webbrowser.open(BASE_URL, new=2):
+def open_browser(base_url):
+    if not webbrowser.open(base_url, new=2):
         raise RuntimeError(
             'Khong mo duoc trinh duyet mac dinh. Hay kiem tra cai dat trinh duyet tren Windows.'
         )
 
 
 def main():
-    if website_ready():
+    port = HGB_PORT
+    model = HGB_MODEL_PATH
+    command = [
+        sys.executable,
+        '-B',
+        str(WEBSITE_DIR / 'app.py'),
+        '--model',
+        str(model.resolve()),
+        '--port',
+        str(port),
+    ]
+
+    if not model.is_file():
+        raise RuntimeError(f'Khong tim thay mo hinh: {model}')
+    model_hash = hashlib.sha256(model.read_bytes()).hexdigest()
+    base_url = f'http://127.0.0.1:{port}'
+    if website_ready(base_url, model_hash):
         print('Website da chay. Dang mo giao dien...', flush=True)
-        open_browser()
+        open_browser(base_url)
         return
-    if port_in_use():
+    if port_in_use(port):
         raise RuntimeError(
-            'Cong 8001 dang duoc su dung nhung mo hinh Bike Rental chua san sang. '
+            f'Cong {port} dang duoc su dung nhung khong tra ve dung mo hinh. '
             'Kiem tra cua so may chu dang chay; khong khoi dong them mot ban.'
         )
     print(
         'Dang khoi dong Bike Rental. Trinh duyet se tu mo khi mo hinh san sang.',
         flush=True,
     )
-    server = subprocess.Popen([sys.executable, '-B', str(ROOT / 'app.py')], cwd=ROOT)
+    server = subprocess.Popen(command, cwd=WEBSITE_DIR)
     try:
         deadline = time.monotonic() + 60
         while time.monotonic() < deadline:
             if server.poll() is not None:
                 raise RuntimeError('May chu da dung. Xem thong bao loi phia tren.')
-            if website_ready():
-                open_browser()
+            if website_ready(base_url, model_hash):
+                open_browser(base_url)
                 print(
                     'Da mo giao dien. Giu cua so nay khi su dung. Nhan Ctrl+C de dung website.',
                     flush=True,
@@ -94,6 +106,9 @@ def main():
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--demo', action='store_true', help=argparse.SUPPRESS)
+    parser.parse_args()
     try:
         main()
     except KeyboardInterrupt:

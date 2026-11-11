@@ -4,10 +4,20 @@ from datetime import date
 from pathlib import Path
 import pandas as pd
 from flask import jsonify, request
-from evaluation import evaluation_report, hours_by_day, read_test_hours
+from evaluation import (
+    PREVIOUS_DAY_MODEL,
+    RF85_MODEL,
+    evaluation_report,
+    hours_by_day,
+    read_test_hours,
+)
 
 
-def register_history(app):
+def register_history(
+    app, previous_day_archive=None, *, active_model=None, archive=None
+):
+    rf_model = RF85_MODEL if previous_day_archive is None else PREVIOUS_DAY_MODEL
+    active_model = active_model or rf_model
     source = Path(__file__).resolve().parents[1] / 'data/raw/hour.csv'
     try:
         data = pd.read_csv(
@@ -106,41 +116,69 @@ def register_history(app):
         days = selected.loc[selected.weekday.eq(weekday)]
         observations = days.loc[days.hr.eq(hour)].sort_values('dteday')
         records = [
-            dict(date=row.dteday, rentals=int(row.cnt),
-                 casual=int(row.casual), registered=int(row.registered))
+            dict(
+                date=row.dteday,
+                rentals=int(row.cnt),
+                casual=int(row.casual),
+                registered=int(row.registered),
+            )
             for row in observations.itertuples()
         ]
         summary = None
         if records:
             counts = observations.cnt
             summary = dict(
-                samples=len(records), total=int(counts.sum()),
-                mean=float(counts.mean()), median=float(counts.median()),
-                q25=float(counts.quantile(0.25)), q75=float(counts.quantile(0.75)),
+                samples=len(records),
+                total=int(counts.sum()),
+                mean=float(counts.mean()),
+                median=float(counts.median()),
+                q25=float(counts.quantile(0.25)),
+                q75=float(counts.quantile(0.75)),
                 minimum=min(records, key=lambda row: row['rentals']),
                 maximum=max(records, key=lambda row: row['rentals']),
             )
         return jsonify(
-            filters=filters, weekday=weekday, hour=hour, records=records,
-            summary=summary, missing_days=int(days.dteday.nunique()) - len(records),
+            filters=filters,
+            weekday=weekday,
+            hour=hour,
+            records=records,
+            summary=summary,
+            missing_days=int(days.dteday.nunique()) - len(records),
         )
+
+    def test_comparison(model, model_archive):
+        try:
+            rows = read_test_hours({model[1]: 'prediction'}, model_archive)
+            return jsonify(days=hours_by_day(rows))
+        except (OSError, ValueError):
+            app.logger.exception('Saved test predictions unavailable for %s', model[0])
+            return (
+                jsonify(error='Không đọc được kết quả đối chiếu của mô hình.'),
+                503,
+            )
 
     @app.get('/api/history/rf-test')
     def rf_test():
-        try:
-            rows = read_test_hours({'original_refit_85': 'prediction'})
-            return jsonify(days=hours_by_day(rows))
-        except (OSError, ValueError):
-            app.logger.exception('RF test predictions unavailable')
-            return (
-                jsonify(error='Không đọc được kết quả kiểm tra của Random Forest.'),
-                503,
-            )
+        return test_comparison(rf_model, previous_day_archive)
+
+    @app.get('/api/history/model-test')
+    def model_test():
+        model_archive = (
+            previous_day_archive if active_model == PREVIOUS_DAY_MODEL else archive
+        )
+        return test_comparison(active_model, model_archive)
 
     @app.get('/api/evaluation')
     def evaluation():
         try:
-            return jsonify(evaluation_report())
+            return jsonify(
+                evaluation_report(
+                    previous_day_archive, archive=archive, default_model=active_model[0]
+                )
+            )
         except (OSError, ValueError):
             app.logger.exception('Saved evaluation data unavailable')
-            return jsonify(error='Chưa đọc được các dự đoán đã lưu của thí nghiệm.'), 503
+            return (
+                jsonify(error='Chưa đọc được các dự đoán đã lưu của thí nghiệm.'),
+                503,
+            )

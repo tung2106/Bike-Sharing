@@ -1,4 +1,4 @@
-"""Integration checks using the actual downloaded hour model, no retraining."""
+"""Integration checks using the active HGB model, no retraining."""
 
 import json
 import sys
@@ -45,11 +45,14 @@ class WebsiteTests(unittest.TestCase):
                 self.assertEqual(response.status_code, 200)
         status = self.client.get('/api/model')
         self.assertTrue(status.json['ready'])
-        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.ensemble import HistGradientBoostingRegressor
 
         self.assertIsInstance(
-            self.bundle['pipeline'].named_steps['model'], RandomForestRegressor
+            self.bundle['pipeline'].named_steps['model'], HistGradientBoostingRegressor
         )
+        self.assertEqual(self.bundle['pipeline'].named_steps['model'].n_iter_, 400)
+        self.assertEqual(status.json['model_key'], 'hgb85')
+        self.assertEqual(status.json['parameters']['max_iter'], 400)
         self.assertEqual(status.json['test'], self.bundle['report']['test'])
         self.assertEqual(len(status.json['model_sha256']), 64)
 
@@ -179,7 +182,7 @@ class WebsiteTests(unittest.TestCase):
             self.assertAlmostEqual(
                 value, self.bundle['report']['test'][metric], places=8
             )
-        print('Random Forest 85% test metrics reproduced:', json.dumps(actual))
+        print('HistGradientBoosting 85% test metrics reproduced:', json.dumps(actual))
 
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
 ---
 version: alpha
 name: "Bike Rental"
-description: "Không gian phân tích nhu cầu thuê xe theo giờ, trực quan và tập trung vào Random Forest."
+description: "Không gian phân tích nhu cầu thuê xe theo giờ, trực quan, với HistGradientBoosting làm mô hình dự đoán chính của bản demo."
 colors:
   primary: "#0878B6"
   navy: "#10243B"
@@ -127,7 +127,7 @@ Hover/focus của nút và link dùng thời lượng 160ms. Không có chuyển
 - Giữ một thao tác chính cho mỗi màn hình và hiển thị rõ nguồn của số liệu.
 - Giữ nguyên model.joblib, API và dữ liệu huấn luyện trong các lần chỉnh giao diện.
 - Không diễn giải R² thành phần trăm chắc chắn cho một dự đoán.
-- Không thêm màn hình HGB; HGB chỉ dùng đối chứng ở phần thực nghiệm.
+- Phần dự đoán và đối chiếu hiển thị tên mô hình đang chạy; phần đánh giá mặc định chọn cùng mô hình đó.
 - Không dùng icon không nhãn, số liệu mô phỏng như thể là thực tế, hoặc hiệu ứng làm khó đọc biểu đồ.
 
 Thay đổi có chủ đích so với bản trước: tiêu đề Georgia chuyển sang Bahnschrift/Segoe UI và kết quả xanh nhạt chuyển thành navy với số cyan theo yêu cầu đổi phong cách. Các token dùng chung được gom về một khối :root thay cho nhiều lần ghi đè trong CSS.

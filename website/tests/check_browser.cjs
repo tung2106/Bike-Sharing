@@ -1,88 +1,111 @@
-// From website/: npm install playwright, then node tests/check_browser.cjs.
-const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
+// Run against a running website. BIKE_TEST_URL can point to the previous-day demo.
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
+const assert = require("node:assert/strict");
+const base = process.env.BIKE_TEST_URL || "http://127.0.0.1:8002";
 
 (async () => {
   const browser = await chromium.launch({
     headless: true,
     ...(process.env.CHROME_PATH
       ? { executablePath: process.env.CHROME_PATH }
-      : {})
+      : {}),
   });
   try {
     const page = await browser.newPage({
       viewport: { width: 1440, height: 1080 },
-      deviceScaleFactor: 1
+      deviceScaleFactor: 1,
     });
     const errors = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-    await page.goto('http://127.0.0.1:8001', { waitUntil: 'networkidle' });
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto(base, { waitUntil: "networkidle" });
+    await page.locator('.rail-menu a[href="#du-doan"]').click();
+    const info = await (
+      await page.request.get(new URL("/api/model", base).href)
+    ).json();
     await page.waitForFunction(
-      () => !document.getElementById('predict-button').disabled
+      () => !document.getElementById("predict-button").disabled,
     );
     assert.equal(
-      await page.locator('#model-status').innerText(),
-      'Mô hình đã sẵn sàng'
+      await page.locator("#model-status").innerText(),
+      info.short_name,
     );
-    await page.getByRole('button', { name: 'Tính dự đoán' }).click();
+    await page.getByRole("button", { name: "Tính dự đoán" }).click();
     await page.waitForFunction(
-      () => document.getElementById('result-state').textContent === 'Đã dự đoán'
+      () =>
+        document.getElementById("result-state").textContent === "Đã dự đoán",
     );
-    assert.notEqual(await page.locator('#prediction-value').innerText(), '—');
-    const checks = path.join(__dirname, '..', '.checks');
-    fs.mkdirSync(checks, { recursive: true });
-    await page.screenshot({
-      path: path.join(checks, 'desktop.png'),
-      fullPage: true
-    });
-    await page.locator('#hour').selectOption('17');
+    assert.notEqual(await page.locator("#prediction-value").innerText(), "—");
+    assert.equal(await page.locator("#hourly-rows tr").count(), 24);
+    await page.locator('.rail-menu a[href="#cao-diem"]').click();
+    await page.locator("#peak-list:visible").waitFor();
+    assert.equal(await page.locator("#peak-list li:visible").count(), 3);
+    await page.locator('.rail-menu a[href="#du-doan"]').click();
+    await page.locator("#hour").selectOption("17");
     assert.equal(
-      await page.locator('#result-state').innerText(),
-      'Cần tính lại'
+      await page.locator("#result-state").innerText(),
+      "Cần tính lại",
     );
-    await page.locator('#feels_like').fill('');
-    await page.getByRole('button', { name: 'Tính dự đoán' }).click();
+    await page.locator("#feels_like").fill("");
+    await page.getByRole("button", { name: "Tính dự đoán" }).click();
     await page.waitForFunction(
-      () => document.getElementById('result-state').textContent === 'Đã dự đoán'
+      () =>
+        document.getElementById("result-state").textContent === "Đã dự đoán",
     );
     assert.match(
-      await page.locator('#imputation-note').innerText(),
-      /nhiệt độ cảm nhận/
+      await page.locator("#imputation-note").innerText(),
+      /nhiệt độ cảm nhận/,
     );
-    await page.locator('#humidity').fill('101');
+    await page.locator("#humidity").fill("101");
+    await page.getByRole("button", { name: "Tính dự đoán" }).click();
     assert.equal(
-      await page.locator('#humidity').evaluate((el) => el.checkValidity()),
-      false
+      await page.locator("#humidity").getAttribute("aria-invalid"),
+      "true",
     );
-    await page.locator('#humidity').fill('65');
+    await page.locator("#humidity").fill("65");
     await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(
       await page.evaluate(
-        () => document.documentElement.scrollWidth <= innerWidth
+        () => document.documentElement.scrollWidth <= innerWidth,
       ),
       true,
-      'Mobile overflow'
+      "Mobile overflow",
     );
-    await page.screenshot({
-      path: path.join(checks, 'mobile.png'),
-      fullPage: true
-    });
+    await page.locator('.rail-menu a[href="#danh-gia"]').click();
+    await page.locator("#eval-content:visible").waitFor();
+    assert.equal(
+      await page.locator("#eval-model").inputValue(),
+      info.model_key,
+    );
+    await page.locator('input[name="eval-metric"][value="r2"]').check();
+    assert.ok(await page.locator("#eval-time-pickers").isHidden());
+    await page.locator('.rail-menu a[href="#doi-chieu"]').click();
+    await page.locator("#rf-results:visible").waitFor();
+    assert.ok(
+      (await page.locator("#rf-heading").innerText()).includes(
+        info.model_label,
+      ),
+    );
+    await page.locator("#rf-day").selectOption("2012-12-31");
+    assert.equal(await page.locator("#rf-rows tr").count(), 24);
+    await page.locator('.rail-menu a[href="#lich-su"]').click();
+    await page.locator("#heat-grid button").first().click();
+    await page.locator("#slot-results:visible").waitFor();
+    assert.ok((await page.locator("#slot-rows tr").count()) > 0);
+    await page.locator('.rail-menu a[href="#du-doan"]').click();
     await page.setViewportSize({ width: 1440, height: 1080 });
     await page.evaluate(() => {
-      document.documentElement.style.fontSize = '32px';
+      document.documentElement.style.fontSize = "32px";
     });
     assert.equal(
       await page.evaluate(
-        () => document.documentElement.scrollWidth <= innerWidth
+        () => document.documentElement.scrollWidth <= innerWidth,
       ),
       true,
-      'Text zoom overflow'
+      "Text zoom overflow",
     );
     assert.deepEqual(errors, []);
     console.log(
-      'PASS: real prediction, stale result, missing data, validation, mobile layout, 200% text, JS console'
+      "PASS: forecast, peaks, stale result, missing/invalid input, evaluation, history, heatmap, mobile, text zoom and console",
     );
   } finally {
     await browser.close();

@@ -11,4 +11,4 @@ if (-not (Test-Path -LiteralPath $pythonPath)) {
 if ($LASTEXITCODE -ne 0) {
     throw 'Cai thu vien that bai.'
 }
-Write-Output 'Da cai dat. Chay ./start.ps1, sau do mo http://127.0.0.1:8001'
+Write-Output 'Da cai dat. Chay ./start.ps1, sau do mo http://127.0.0.1:8002'

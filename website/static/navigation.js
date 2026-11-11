@@ -26,7 +26,7 @@
     "#danh-gia": [
       "THỰC NGHIỆM THEO GIỜ",
       "Đánh giá mô hình",
-      "So sánh Random Forest với mô hình đối chứng HistGradientBoosting.",
+      "So sánh các mô hình trên cùng những giờ trong tập kiểm tra.",
     ],
   };
   function showView() {

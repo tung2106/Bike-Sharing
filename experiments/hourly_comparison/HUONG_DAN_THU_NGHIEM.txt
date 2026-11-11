@@ -1,4 +1,4 @@
-THỬ NGHIỆM MÔ HÌNH THEO GIỜ V2 — NHÁNH phien-ban-2
+THỬ NGHIỆM MÔ HÌNH THEO GIỜ
 
 1. MỤC TIÊU
 Giảm sai số lượt thuê/giờ, giữ nguyên 12 đầu vào mà website đang cung cấp.
@@ -81,11 +81,17 @@ File môi trường và requirements.txt giúp tái lập môi trường nạp m
 Huấn luyện lại, tự tạo lần chạy mới:
   .\website\.venv\Scripts\python.exe -B experiments\hourly_comparison\train_experiment.py
 
-Chạy đúng mô hình đã kiểm tra trong lần này ở cổng 8001:
-  .\website\.venv\Scripts\python.exe -B experiments\hourly_comparison\serve_v2.py --run experiments\hourly_comparison\runs\20261025_024202
+Tái lập 3 đợt validation, lần fit 85% và dự đoán test của bản sàng lọc 20261025_024202:
+  .\website\.venv\Scripts\python.exe -B experiments\hourly_comparison\verify_hgb.py
 
-Mở http://127.0.0.1:8001/ để thử v2. Bản gốc ở cổng 8000 vẫn giữ mô hình cũ.
-Chọn cùng ngày, giờ, thời tiết để so sánh; khác con số không tự chứng minh bản nào đúng.
+So sánh HGB với 100, 200, 300, 400 và 600 vòng:
+  .\website\.venv\Scripts\python.exe -B experiments\hourly_comparison\train_hgb_rounds.py
+Lần chạy tạo thư mục mới trong runs/. Chọn mốc theo MAE gộp của ba đợt
+validation, rồi đánh giá duy nhất bản đã chọn trên 2.608 giờ test.
+Demo dùng bản 400 vòng của lần chạy 20261111T160820094592Z_hgb_rounds.
+
+Nhấp đúp scripts\MO_WEBSITE.cmd để mở demo HGB ở http://127.0.0.1:8002/.
+Vào Đánh giá mô hình để so sánh HGB và Random Forest trên cùng 2.608 giờ test.
 Tên mô hình và điểm test được đọc từ bundle và hiển thị ở phần Hiệu quả đã kiểm thử.
 Biểu đồ 24 giờ và 3 giờ cao điểm vẫn hoạt động, vẫn giữ thời tiết cố định cả ngày.
 

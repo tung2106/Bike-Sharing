@@ -31,8 +31,8 @@ from sklearn.pipeline import Pipeline
 from threadpoolctl import threadpool_limits
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / 'training/colab'))
-from colab_train import (
+sys.path.insert(0, str(ROOT / 'training'))
+from model_utils import (
     feature_columns,
     make_preprocessor,
     regression_metrics,
