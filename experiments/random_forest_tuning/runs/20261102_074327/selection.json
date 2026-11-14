@@ -1,0 +1,37 @@
+{
+  "best": {
+    "max_depth": "32",
+    "min_samples_leaf": 1,
+    "train_RMSE": 16.859584187532356,
+    "train_MAE": 10.531343469489519,
+    "train_R2": 0.9877893926825863,
+    "validation_RMSE": 125.7063916880563,
+    "validation_MAE": 87.25359142308635,
+    "validation_R2": 0.6828974412646787,
+    "RMSE_gap": 108.84680750052394,
+    "R2_gap": 0.3048919514179076,
+    "mean_tree_depth": 32.0,
+    "max_tree_depth": 32,
+    "mean_leaf_count": 6818.46,
+    "elapsed_seconds": 2.5661550999998326
+  },
+  "baseline_same_train_split": {
+    "max_depth": "None",
+    "min_samples_leaf": 1,
+    "train_RMSE": 16.601764441125386,
+    "train_MAE": 10.2595358405261,
+    "train_R2": 0.988159990761778,
+    "validation_RMSE": 126.37997220296579,
+    "validation_MAE": 87.75400677922742,
+    "validation_R2": 0.6794900351762299,
+    "RMSE_gap": 109.7782077618404,
+    "R2_gap": 0.3086699555855481,
+    "mean_tree_depth": 42.54,
+    "max_tree_depth": 47,
+    "mean_leaf_count": 7267.79,
+    "elapsed_seconds": 2.730577599999833
+  },
+  "validation_RMSE_improvement_percent": 0.5329804265407819,
+  "test_evaluated": false,
+  "deployed_model_updated": false
+}

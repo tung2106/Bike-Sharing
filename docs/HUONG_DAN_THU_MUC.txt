@@ -1,0 +1,42 @@
+CẤU TRÚC DỰ ÁN BIKE SHARING
+
+CHẠY DEMO TRÊN MÁY
+Từ thư mục gốc của dự án, mở scripts\MO_WEBSITE.cmd để chạy
+HistGradientBoosting 400 vòng tại http://127.0.0.1:8002/.
+Lần đầu có thể cài môi trường bằng website\setup.ps1.
+website\start.ps1 cũng mở HGB ở cổng 8002. Xem Random Forest trong mục Đánh giá mô hình.
+
+HUẤN LUYỆN HGB TRÊN MÁY
+Chạy từ thư mục gốc:
+  .\website\.venv\Scripts\python.exe -B experiments\hourly_comparison\train_hgb_rounds.py
+
+Lệnh thử 100, 200, 300, 400 và 600 vòng trên ba đợt validation theo thời gian,
+chọn MAE gộp thấp nhất, rồi train bản cuối và chấm trên 2.608 giờ test.
+Mỗi lần chạy lưu vào một thư mục mới trong experiments/hourly_comparison/runs/.
+Demo đọc model.joblib và các dự đoán kiểm tra của lần chạy được chỉ định
+trong website/model_config.py. Khi train xong, kiểm tra kết quả trước khi
+đổi lần chạy của demo.
+
+THƯ MỤC ĐANG DÙNG
+  website/                     Flask, giao diện, kiểm thử và môi trường .venv.
+  scripts/                     File mở web Windows và script tiền xử lý.
+  data/raw/                    Dữ liệu gốc hour.csv, day.csv và mô tả.
+  data/processed/              Dữ liệu đã chia và báo cáo tiền xử lý.
+  training/model_utils.py      Hàm dùng chung cho các thí nghiệm chạy trên máy.
+  experiments/hourly_comparison/
+                               Mã train HGB, kết quả và mô hình demo.
+  training/random_forest/      Mã train, mô hình và kết quả đối chiếu RF.
+  experiments/rf85_previous_day/, experiments/random_forest_tuning/,
+  experiments/ensemble_blend/  Các hướng thử nghiệm và kết quả để đối chiếu.
+  docs/reports/, docs/meetings/ Báo cáo và biên bản làm việc.
+
+HUẤN LUYỆN VÀ ĐỊNH DẠNG MÃ
+Quy trình HGB hiện tại đọc CSV cục bộ và chạy bằng Python trong website/.venv.
+Dùng Black với tùy chọn -S cho Python và Prettier cho JavaScript, CSS, HTML.
+Phạm vi định dạng là mã nguồn trong website/, experiments/, scripts/ và training/.
+
+KIỂM THỬ TỪ THƯ MỤC GỐC
+  .\website\.venv\Scripts\python.exe -B -m unittest discover -s website/tests -p "test_*.py"
+
+Để kiểm thử trình duyệt, chạy demo và đặt BIKE_TEST_URL=http://127.0.0.1:8002
+trước khi chạy node website/tests/check_browser.cjs với Playwright đã cài.

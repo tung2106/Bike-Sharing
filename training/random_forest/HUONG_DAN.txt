@@ -1,0 +1,52 @@
+﻿RANDOM FOREST — CẤU HÌNH ĐỘ SÂU 20, CHIA 70/15/15
+
+CẤU HÌNH ĐÃ LƯU
+  config.json: max_depth=20, min_samples_leaf=1, n_estimators=100,
+               random_state=42, n_jobs=4, tỷ lệ 70/15/15.
+
+CHẠY LẠI TỪ THƯ MỤC GỐC
+  .\website\.venv\Scripts\python.exe -B training/random_forest/train_depth20.py
+
+Mô hình và tiền xử lý chỉ học trên train. Validation và test chỉ dùng đánh giá.
+Mỗi lần chạy tạo thư mục runs/ riêng, không ghi đè mô hình website.
+Script train.py cũ và các file model/metrics ở thư mục này là bản lịch sử học 85%.
+
+LẦN CHẠY HIỆN TẠI
+  runs/20261102_074907_depth20_70_15_15/
+    model.joblib               Mô hình depth20 mới, đã kiểm tra lưu/tải lại.
+    config.json                Cấu hình của lần chạy.
+    metrics.json               Chỉ số cả ba tập và đối chứng.
+    comparison.csv             Bảng đối chiếu depth20 và không giới hạn.
+    split_manifest.csv         Tập tương ứng của từng dòng dữ liệu.
+    train_predictions.csv      Dự đoán trên train.
+    validation_predictions.csv Dự đoán trên validation.
+    test_predictions.csv       Dự đoán trên test.
+    environment.json           Phiên bản thư viện.
+    provenance.json            SHA-256 dữ liệu, mã nguồn, cấu hình và mô hình.
+
+CHIA THEO THỜI GIAN
+Train:      12.165 dòng, 2011-01-01 00:00 đến 2012-05-27 01:00.
+Validation:  2.606 dòng, 2012-05-27 02:00 đến 2012-09-12 15:00.
+Test:        2.608 dòng, 2012-09-12 16:00 đến 2012-12-31 23:00.
+Số dòng train và validation được làm tròn xuống, test lấy phần còn lại.
+
+KẾT QUẢ DEPTH20
+Tập         RMSE       MAE        R2
+Train        29,7292   19,4735    0,9620
+Validation  125,7419   88,1657    0,6827
+Test         93,8582   64,7762    0,8096
+
+ĐỐI CHỨNG CÔNG BẰNG: KHÔNG GIỚI HẠN ĐỘ SÂU, CÙNG TRAIN 70%
+Train        16,6018   10,2595    0,9882
+Validation  126,3800   87,7540    0,6795
+Test         90,1641   61,3564    0,8243
+
+ĐÁNH GIÁ
+- Depth20 giảm RMSE validation khoảng 0,50%, nhưng RMSE test tăng khoảng 4,10%.
+- Trên test, dự đoán depth20 lệch tuyệt đối trung bình khoảng 64,78 lượt/giờ.
+- R2=0,8096 không có nghĩa là 80,96% dự đoán đúng.
+- Khoảng cách train-test giảm, nhưng không đồng nghĩa chất lượng test tốt hơn.
+- Không dùng kết quả test này để tiếp tục dò tham số trên cùng test.
+- Test lịch sử từng được xem trong dự án; đây không phải dữ liệu độc lập mới.
+- Bản website cũ học 85%, nên không dùng nó làm đối chứng duy nhất cho bản học 70%.
+- Website mặc định dùng HGB 400 vòng. Kết quả depth20 phục vụ đối chiếu thực nghiệm.

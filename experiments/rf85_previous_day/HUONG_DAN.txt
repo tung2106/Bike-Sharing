@@ -1,0 +1,35 @@
+RANDOM FOREST VỚI TỔNG LƯỢT THUÊ NGÀY TRƯỚC
+
+Mốc so sánh là bản RF85 ở commit 028a044. Cả hai mô hình dùng 100 cây và
+cùng cấu hình. Mô hình thử nghiệm thêm một cột previous_day_rentals. Ví dụ,
+cả 24 giờ ngày 31/12 nhận tổng lượt đã chốt của ngày 30/12 từ data/raw/day.csv.
+Nếu thiếu đúng ngày D−1, pipeline dùng trung vị học trên các dòng huấn luyện.
+
+Chạy các lệnh sau từ thư mục gốc của dự án. Mỗi lần train sinh một thư mục
+runs mới, dòng RUN ở cuối lệnh cho biết vị trí. Lần chạy đi kèm bản này nằm ở
+experiments/rf85_previous_day/runs/20261104T091012197661Z.
+
+Huấn luyện
+  website\.venv\Scripts\python.exe -B experiments/rf85_previous_day/train.py
+
+Kiểm lại mô hình đã lưu, dự đoán 24 giờ, biểu đồ đánh giá và ba giờ cao điểm
+  website\.venv\Scripts\python.exe -B experiments/rf85_previous_day/verify.py experiments/rf85_previous_day/runs/20261104T091012197661Z
+
+Xem kết quả trên web
+  Mở scripts\MO_WEBSITE.cmd và vào mục Đánh giá mô hình ở cổng 8002.
+  Chọn Random Forest 85% hoặc bản có lượt thuê ngày trước để đối chiếu với HGB.
+
+Đọc kết quả trong thư mục lần chạy
+  model.joblib               Pipeline tiền xử lý và rừng đã huấn luyện.
+  hour_with_previous_day.csv Dữ liệu giờ có thêm tổng ngày trước.
+  validation_folds.csv       Ba đợt huấn luyện trên quá khứ và đánh giá trên các ngày tiếp theo.
+  comparison.csv             MAE, RMSE, R² và kết quả nhận diện cao điểm trên cùng 2.608 giờ.
+  test_predictions.csv       Thực tế, dự đoán từng giờ và đặc trưng ngày để đối chiếu.
+  metrics.json               Mốc chia, cấu hình, phiên bản kết quả và mã kiểm tra dữ liệu.
+
+Chỉ tính cao điểm cho ngày có đủ 24 giờ. perfect_days đếm ngày trùng cả ba
+giờ, matched_hours cộng số giờ trùng. Nếu bằng số lượt, ưu tiên giờ sớm hơn.
+Các đợt validation được tách ở đầu ngày. Phép so sánh cuối dùng 14.771 giờ
+để huấn luyện và 2.608 giờ cuối để kiểm tra, đúng mốc của bản main.
+Thí nghiệm dùng thời tiết lịch sử từng giờ và tổng ngày D−1 đã chốt trước
+mỗi ngày dự đoán. Tập test lịch sử đã được xem trong các lần trước.

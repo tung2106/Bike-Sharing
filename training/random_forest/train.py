@@ -8,8 +8,8 @@ from sklearn.base import clone
 from threadpoolctl import threadpool_limits
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / 'training/colab'))
-from colab_train import regression_metrics
+sys.path.insert(0, str(ROOT / 'training'))
+from model_utils import regression_metrics
 
 
 def main():

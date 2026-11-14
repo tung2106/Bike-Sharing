@@ -1,0 +1,166 @@
+{
+  "test": {
+    "MAE": 53.104470858895716,
+    "RMSE": 81.0348915406765,
+    "R2": 0.8581085165978202
+  },
+  "baseline_test": {
+    "RMSE": 82.07304035839987,
+    "MAE": 54.66903265593047,
+    "R2": 0.8544496471509435
+  },
+  "split": {
+    "train_rows": 14771,
+    "test_rows": 2608,
+    "train_end": "2012-09-12 15:00:00",
+    "test_start": "2012-09-12 16:00:00",
+    "test_end": "2012-12-31 23:00:00"
+  },
+  "test_comparison": [
+    {
+      "model": "rf85",
+      "RMSE": 82.07304035839987,
+      "MAE": 54.66903265593047,
+      "R2": 0.8544496471509435,
+      "complete_days": 104,
+      "matched_hours": 243,
+      "perfect_days": 59
+    },
+    {
+      "model": "rf85_previous_day",
+      "RMSE": 81.0348915406765,
+      "MAE": 53.104470858895716,
+      "R2": 0.8581085165978202,
+      "complete_days": 104,
+      "matched_hours": 234,
+      "perfect_days": 57
+    }
+  ],
+  "validation": [
+    {
+      "fold": 1,
+      "model": "rf85",
+      "train_rows": 8669,
+      "train_end": "2012-01-01 23:00:00",
+      "validation_rows": 1744,
+      "start": "2012-01-02 00:00:00",
+      "end": "2012-03-14 23:00:00",
+      "RMSE": 101.00219742706258,
+      "MAE": 69.5971315940367,
+      "R2": 0.4688073182725325,
+      "complete_days": 65,
+      "matched_hours": 152,
+      "perfect_days": 32
+    },
+    {
+      "fold": 1,
+      "model": "rf85_previous_day",
+      "train_rows": 8669,
+      "train_end": "2012-01-01 23:00:00",
+      "validation_rows": 1744,
+      "start": "2012-01-02 00:00:00",
+      "end": "2012-03-14 23:00:00",
+      "RMSE": 85.96216333264293,
+      "MAE": 58.92591169724771,
+      "R2": 0.6152265379025361,
+      "complete_days": 65,
+      "matched_hours": 148,
+      "perfect_days": 37
+    },
+    {
+      "fold": 2,
+      "model": "rf85",
+      "train_rows": 10413,
+      "train_end": "2012-03-14 23:00:00",
+      "validation_rows": 1750,
+      "start": "2012-03-15 00:00:00",
+      "end": "2012-05-26 23:00:00",
+      "RMSE": 111.53144965847541,
+      "MAE": 78.7404461904762,
+      "R2": 0.7207943477042925,
+      "complete_days": 71,
+      "matched_hours": 165,
+      "perfect_days": 37
+    },
+    {
+      "fold": 2,
+      "model": "rf85_previous_day",
+      "train_rows": 10413,
+      "train_end": "2012-03-14 23:00:00",
+      "validation_rows": 1750,
+      "start": "2012-03-15 00:00:00",
+      "end": "2012-05-26 23:00:00",
+      "RMSE": 105.8754735688515,
+      "MAE": 73.51162285714285,
+      "R2": 0.7483944344176058,
+      "complete_days": 71,
+      "matched_hours": 167,
+      "perfect_days": 41
+    },
+    {
+      "fold": 3,
+      "model": "rf85",
+      "train_rows": 12163,
+      "train_end": "2012-05-26 23:00:00",
+      "validation_rows": 2592,
+      "start": "2012-05-27 00:00:00",
+      "end": "2012-09-11 23:00:00",
+      "RMSE": 129.85328305026553,
+      "MAE": 88.30480156893003,
+      "R2": 0.6616832947253305,
+      "complete_days": 108,
+      "matched_hours": 248,
+      "perfect_days": 52
+    },
+    {
+      "fold": 3,
+      "model": "rf85_previous_day",
+      "train_rows": 12163,
+      "train_end": "2012-05-26 23:00:00",
+      "validation_rows": 2592,
+      "start": "2012-05-27 00:00:00",
+      "end": "2012-09-11 23:00:00",
+      "RMSE": 127.35005480756867,
+      "MAE": 90.1625385802469,
+      "R2": 0.6746012752259799,
+      "complete_days": 108,
+      "matched_hours": 225,
+      "perfect_days": 35
+    }
+  ],
+  "selection": {
+    "best_params": {
+      "bootstrap": true,
+      "ccp_alpha": 0.0,
+      "criterion": "squared_error",
+      "max_depth": null,
+      "max_features": 1.0,
+      "max_leaf_nodes": null,
+      "max_samples": null,
+      "min_impurity_decrease": 0.0,
+      "min_samples_leaf": 1,
+      "min_samples_split": 2,
+      "min_weight_fraction_leaf": 0.0,
+      "monotonic_cst": null,
+      "n_estimators": 100,
+      "n_jobs": 4,
+      "oob_score": false,
+      "random_state": 42,
+      "verbose": 0,
+      "warm_start": false
+    },
+    "policy": "Same RF parameters in every fit. Only previous_day_rentals is added."
+  },
+  "feature": "previous_day_rentals",
+  "missing_train_rows": 24,
+  "missing_test_rows": 0,
+  "training_lag_median": 4342.0,
+  "evaluation_note": "Previously viewed historical test; observed hourly weather. Daily totals are available only after the preceding day closes.",
+  "evaluated_at_utc": "2026-11-04T09:10:12+00:00",
+  "source_sha256": {
+    "hour.csv": "e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f",
+    "day.csv": "a6bcf826782d3c0fbfdcbeead17cd0884185a0dafe8ff10cd48a874ee7ba18be",
+    "baseline_model": "25ae1d41318ccdc6f1d7056dcd3c09bf4f2133051e9bab864755560fa01aa42a",
+    "test_predictions": "7ab3e17b94c682fd08622ce3f8c52bec72deb503a356158eeefc1112c63c7bb7"
+  }
+}
